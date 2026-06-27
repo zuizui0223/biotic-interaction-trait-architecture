@@ -120,6 +120,7 @@ def build_query_rows(species_rows: Iterable[Mapping[str, object]]) -> list[dict[
 
 
 def source_fingerprint(row: Mapping[str, object]) -> str:
+    """Return one readable, conservative metadata key for reporting purposes."""
     doi = canonical_doi(row.get("doi"))
     if doi:
         return f"doi:{doi}"
@@ -131,21 +132,65 @@ def source_fingerprint(row: Mapping[str, object]) -> str:
     return f"title:{title}|{year}|{normalise_title(first_author)}"
 
 
-def deduplicate_metadata(rows: Iterable[Mapping[str, object]]) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
-    """Keep one richest metadata record per DOI/title fingerprint.
+def _duplicate_keys(row: Mapping[str, object]) -> tuple[str, ...]:
+    """Return exact keys that can connect duplicate metadata records.
 
-    Returns retained rows and an audit table mapping discarded rows to the kept
-    source ID. No fuzzy matching is used; near-duplicates remain reviewable.
+    DOI and exact title/year/first-author keys are both retained. This lets a
+    rich record with a DOI join a sparse record that has only matching title
+    metadata, without relying on fuzzy title matching.
     """
-    grouped: dict[str, list[dict[str, str]]] = defaultdict(list)
-    for row in rows:
-        clean = {str(key): _text(value) for key, value in row.items()}
-        grouped[source_fingerprint(clean)].append(clean)
+    keys: list[str] = []
+    doi = canonical_doi(row.get("doi"))
+    if doi:
+        keys.append(f"doi:{doi}")
+    title = normalise_title(row.get("title"))
+    if title:
+        year = _text(row.get("publication_year"))
+        author = normalise_title(row.get("first_author"))
+        keys.append(f"title:{title}|{year}|{author}")
+    if not keys:
+        keys.append(source_fingerprint(row))
+    return tuple(keys)
+
+
+def deduplicate_metadata(rows: Iterable[Mapping[str, object]]) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+    """Keep one richest record per connected set of exact metadata keys.
+
+    DOI and title keys are connected by records that contain both, so a record
+    with a DOI can be deduplicated against a matching record lacking one. No
+    fuzzy matching is used; near-duplicates remain reviewable.
+    """
+    clean_rows = [{str(key): _text(value) for key, value in row.items()} for row in rows]
+    parent = list(range(len(clean_rows)))
+
+    def find(index: int) -> int:
+        while parent[index] != index:
+            parent[index] = parent[parent[index]]
+            index = parent[index]
+        return index
+
+    def union(left: int, right: int) -> None:
+        left_root, right_root = find(left), find(right)
+        if left_root != right_root:
+            parent[right_root] = left_root
+
+    key_owner: dict[str, int] = {}
+    for index, row in enumerate(clean_rows):
+        for key in _duplicate_keys(row):
+            if key in key_owner:
+                union(index, key_owner[key])
+            else:
+                key_owner[key] = index
+
+    groups: dict[int, list[int]] = defaultdict(list)
+    for index in range(len(clean_rows)):
+        groups[find(index)].append(index)
 
     retained: list[dict[str, str]] = []
     discarded: list[dict[str, str]] = []
-    for fingerprint, group in sorted(grouped.items()):
-        def richness(item: Mapping[str, str]) -> tuple[int, int, int, str]:
+    for indices in sorted(groups.values(), key=lambda values: min(values)):
+        def richness(index: int) -> tuple[int, int, int, str]:
+            item = clean_rows[index]
             fields = ("doi", "abstract", "source_url", "fulltext_url", "title", "first_author")
             return (
                 sum(bool(item.get(field)) for field in fields),
@@ -154,21 +199,24 @@ def deduplicate_metadata(rows: Iterable[Mapping[str, object]]) -> tuple[list[dic
                 item.get("provider_record_id", ""),
             )
 
-        chosen_index = max(range(len(group)), key=lambda index: richness(group[index]))
-        chosen = group[chosen_index].copy()
+        chosen_index = max(indices, key=richness)
+        chosen = clean_rows[chosen_index].copy()
+        keys = sorted({key for index in indices for key in _duplicate_keys(clean_rows[index])})
+        fingerprint = next((key for key in keys if key.startswith("doi:")), keys[0])
         chosen.setdefault("source_id", stable_id("src", fingerprint))
         chosen["dedupe_fingerprint"] = fingerprint
         retained.append(chosen)
-        for index, item in enumerate(group):
+        for index in indices:
             if index == chosen_index:
                 continue
+            item = clean_rows[index]
             discarded.append(
                 {
                     "discarded_provider": item.get("provider", ""),
                     "discarded_provider_record_id": item.get("provider_record_id", ""),
                     "kept_source_id": chosen["source_id"],
                     "dedupe_fingerprint": fingerprint,
-                    "reason": "same DOI or exact normalized title/year/first-author fingerprint",
+                    "reason": "same DOI or exact normalized title/year/first-author key",
                 }
             )
     return retained, discarded
