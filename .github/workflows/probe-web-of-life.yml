@@ -1,0 +1,23 @@
+name: Probe Web of Life source contract
+
+on:
+  pull_request:
+    paths:
+      - "scripts/probe_web_of_life.py"
+      - ".github/workflows/probe-web-of-life.yml"
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe live endpoints
+        run: python scripts/probe_web_of_life.py artifacts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-of-life-source-probe
+          path: artifacts/
+          if-no-files-found: warn
