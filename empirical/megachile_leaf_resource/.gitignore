@@ -1,0 +1,15 @@
+# Downloaded API payloads and locally obtained source text can be large or copyrighted.
+data_raw/metadata_responses/
+data_raw/source_text/
+data_raw/review_packets/
+
+# Generated search and metadata files are reproducible from documented inputs.
+data_raw/search_queries.csv
+data_raw/source_metadata_raw.csv
+data_raw/source_metadata_deduplicated.csv
+data_raw/source_metadata_duplicate_audit.csv
+data_raw/metadata_collection_errors.csv
+
+# Processed evidence outputs are generated from the reviewed ledger.
+data_processed/host_evidence_validated.csv
+data_processed/primary_host_universe.csv
