@@ -27,7 +27,8 @@ jobs:
             artifacts/public_repository_receipts
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: public-repository-receipts
           path: artifacts/public_repository_receipts/
-          if-no-files-found: error
+          if-no-files-found: warn
