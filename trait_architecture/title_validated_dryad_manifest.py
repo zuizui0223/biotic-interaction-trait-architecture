@@ -23,11 +23,12 @@ from urllib.request import Request, urlopen
 
 
 DRYAD_BASE_URL = "https://datadryad.org"
-USER_AGENT = "biotic-interaction-trait-architecture title-validated-dryad-manifest/0.2"
+USER_AGENT = "biotic-interaction-trait-architecture title-validated-dryad-manifest/0.3"
 REQUIRED_COLUMNS = {
     "target_id", "queue_id", "study_id", "study_doi", "repository", "dataset_doi",
     "expected_dataset_title", "validation_rule", "status",
 }
+MAX_MANIFEST_PAGES = 50
 
 
 @dataclass(frozen=True)
@@ -174,7 +175,7 @@ def _fetch_related_payloads(
     dataset_url: str,
     fetch_json: Callable[[str], tuple[int, Any]],
 ) -> tuple[list[tuple[str, Any]], list[str], str]:
-    """Follow Dryad's documented dataset → version → files chain once each."""
+    """Follow dataset → version → files and every declared files-page `next` link."""
 
     payloads: list[tuple[str, Any]] = [(dataset_url, dataset_payload)]
     visited = {dataset_url}
@@ -192,19 +193,24 @@ def _fetch_related_payloads(
         except Exception as error:
             notes.append(f"version {type(error).__name__}: {error}")
 
-    for source_url, payload in tuple(payloads):
-        files_url = _href(payload, "stash:files")
-        if not files_url or files_url in visited:
-            continue
-        try:
-            status, files_payload = fetch_json(files_url)
-            if status >= 400:
-                notes.append(f"files HTTP {status}")
-            else:
-                payloads.append((files_url, files_payload))
-                visited.add(files_url)
-        except Exception as error:
-            notes.append(f"files {type(error).__name__}: {error}")
+    for _, payload in tuple(payloads):
+        page_url = _href(payload, "stash:files")
+        pages_seen = 0
+        while page_url and page_url not in visited and pages_seen < MAX_MANIFEST_PAGES:
+            try:
+                status, files_payload = fetch_json(page_url)
+                if status >= 400:
+                    notes.append(f"files HTTP {status}")
+                    break
+                payloads.append((page_url, files_payload))
+                visited.add(page_url)
+                pages_seen += 1
+                page_url = _href(files_payload, "next")
+            except Exception as error:
+                notes.append(f"files {type(error).__name__}: {error}")
+                break
+        if page_url and pages_seen >= MAX_MANIFEST_PAGES:
+            notes.append(f"manifest pagination exceeded MAX_MANIFEST_PAGES={MAX_MANIFEST_PAGES}")
     return payloads, sorted(visited), "; ".join(notes)
 
 
