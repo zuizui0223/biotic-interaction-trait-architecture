@@ -52,7 +52,7 @@ a separate antagonist source for the defence module
 
 TRY is the appropriate next provider because it supplies customized trait records for selected species and traits. Its Data Explorer exposes content information, whereas actual values are delivered through a registered data request. The request must exclude `pollination syndrome` from predictive trait modules and preserve record-level provenance.
 
-`prepare-try-wol-request.yml` generates a deterministic species manifest from the oriented Web of Life plant side. The artifact is the input to the TRY request, not empirical data itself.
+`prepare-try-wol-request.yml` generated a deterministic request manifest with **3,107 reported plant taxa**, of which **3,106 are species-rank-like**, across **173 oriented pollination networks**. The artifact is the input to the TRY request, not empirical data itself.
 
 ## Analysis sequence
 
