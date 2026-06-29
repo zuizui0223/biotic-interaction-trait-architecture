@@ -15,17 +15,21 @@ def target() -> dict[str, str]:
     }
 
 
+def title_metadata() -> dict:
+    return {
+        "data": {
+            "attributes": {
+                "titles": [{"title": "Data from Exact Study Title"}],
+                "url": "https://datadryad.org/dataset/doi:10.5061/dryad.example",
+            }
+        }
+    }
+
+
 def test_exact_title_match_allows_manifest_recovery() -> None:
     def fetch(url: str):
         if "api.datacite.org" in url:
-            return 200, {
-                "data": {
-                    "attributes": {
-                        "titles": [{"title": "Data from Exact Study Title"}],
-                        "url": "https://datadryad.org/dataset/doi:10.5061/dryad.example",
-                    }
-                }
-            }
+            return 200, title_metadata()
         if "datasets/doi%3A10.5061%2Fdryad.example" in url:
             return 200, {
                 "_embedded": {
@@ -50,6 +54,40 @@ def test_exact_title_match_allows_manifest_recovery() -> None:
     assert report["counts_by_manifest_status"]["manifest_recovered"] == 1
 
 
+def test_relative_dataset_version_and_files_links_are_followed() -> None:
+    calls: list[str] = []
+
+    def fetch(url: str):
+        calls.append(url)
+        if "api.datacite.org" in url:
+            return 200, title_metadata()
+        if "datasets/doi%3A10.5061%2Fdryad.example" in url:
+            return 200, {"_links": {"stash:version": {"href": "/api/v2/versions/4805"}}}
+        if url == "https://datadryad.org/api/v2/versions/4805":
+            return 200, {"_links": {"stash:files": {"href": "/api/v2/versions/4805/files"}}}
+        if url == "https://datadryad.org/api/v2/versions/4805/files":
+            return 200, {
+                "_embedded": {
+                    "stash:files": [
+                        {
+                            "attributes": {"path": "Raw Floral Visitors.csv"},
+                            "_links": {"stash:download": {"href": "/api/v2/files/77/download"}},
+                        }
+                    ]
+                }
+            }
+        return 404, {}
+
+    receipts, _ = probe_targets([target()], fetch_json=fetch)
+
+    assert len(receipts) == 1
+    assert receipts[0].manifest_status == "manifest_recovered"
+    assert receipts[0].file_name == "Raw Floral Visitors.csv"
+    assert receipts[0].file_url == "https://datadryad.org/api/v2/files/77/download"
+    assert "https://datadryad.org/api/v2/versions/4805" in receipts[0].dryad_request_url
+    assert "https://datadryad.org/api/v2/versions/4805/files" in calls
+
+
 def test_title_mismatch_blocks_any_dryad_manifest_request() -> None:
     calls: list[str] = []
 
@@ -67,7 +105,7 @@ def test_title_mismatch_blocks_any_dryad_manifest_request() -> None:
 def test_dryad_failure_remains_distinct_from_missing_title_validation() -> None:
     def fetch(url: str):
         if "api.datacite.org" in url:
-            return 200, {"data": {"attributes": {"titles": [{"title": "Data from Exact Study Title"}]}}}
+            return 200, title_metadata()
         raise TimeoutError("Dryad endpoint timed out")
 
     receipts, _ = probe_targets([target()], fetch_json=fetch)
