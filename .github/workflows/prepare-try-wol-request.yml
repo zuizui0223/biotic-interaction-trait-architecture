@@ -1,0 +1,28 @@
+name: Prepare TRY request from Web of Life pollination taxa
+
+on:
+  pull_request:
+    paths:
+      - "scripts/prepare_try_wol_request.py"
+      - "scripts/probe_wol_orientation.py"
+      - ".github/workflows/prepare-try-wol-request.yml"
+  workflow_dispatch:
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Recover Web of Life plant-side orientation
+        run: python scripts/probe_wol_orientation.py artifacts/orientation
+      - name: Prepare species manifest for TRY
+        run: python scripts/prepare_try_wol_request.py artifacts/orientation artifacts/try_request
+      - uses: actions/upload-artifact@v4
+        with:
+          name: try-wol-request-manifest
+          path: artifacts/
+          if-no-files-found: error
