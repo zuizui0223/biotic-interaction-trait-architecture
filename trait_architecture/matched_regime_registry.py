@@ -54,7 +54,15 @@ DIRECT_ALIGNMENT = frozenset({"exact", "predeclared_overlap"})
 LINKABLE_UNITS = frozenset({"individual", "plant_population", "patch", "network"})
 RECOVERABLE_TABLES = frozenset({"supplement", "repository", "available", "author_provided"})
 READ_FULL_TEXT = frozenset({"read", "available"})
-SEPARATE_MODULES = frozenset({"independent", "separately_measured", "separate"})
+SEPARATE_MODULES = frozenset(
+    {
+        "independent",
+        "separately_measured",
+        "separate",
+        "separately_measured_raw_not_recovered",
+    }
+)
+COMPOSITE_ONLY_MODULES = frozenset({"composite_only", "conflated_composite"})
 
 
 @dataclass(frozen=True)
@@ -119,15 +127,24 @@ def _full_text_read(row: Mapping[str, str]) -> bool:
     return _normalise(row.get("full_text_status")).lower() in READ_FULL_TEXT
 
 
-def _modules_separated(row: Mapping[str, str]) -> bool:
-    """Return whether A_flower and B_flower were measured separately.
+def _module_status(row: Mapping[str, str]) -> str:
+    return _normalise(row.get("module_separation_status")).lower()
 
-    A composite such as floral exsertion relative to a protective bract may be
-    biologically important, but it cannot identify the Part I A × B relation by
-    itself because a change in the composite can arise from either module.
+
+def _modules_separated(row: Mapping[str, str]) -> bool:
+    """Return whether data contain separately measured A and B components.
+
+    This can be true even when the public article analysed a composite and the
+    underlying individual table is not yet available. In that situation the
+    study stays M2 due to data recoverability, but it remains a legitimate D1
+    reanalysis candidate after data acquisition.
     """
 
-    return _normalise(row.get("module_separation_status")).lower() in SEPARATE_MODULES
+    return _module_status(row) in SEPARATE_MODULES
+
+
+def _composite_only(row: Mapping[str, str]) -> bool:
+    return _module_status(row) in COMPOSITE_ONLY_MODULES
 
 
 def _channel_presence(row: Mapping[str, str]) -> tuple[bool, bool, bool, bool]:
@@ -196,8 +213,10 @@ def classify_matched_study_card(row: Mapping[str, str]) -> MatchedStudySummary:
         warnings.append("No declared study landscape identity.")
     if not _has_value(row.get("sampling_period")):
         warnings.append("No declared sampling period.")
-    if _has_value(row.get("module_separation_status")) and not _modules_separated(row):
-        warnings.append("Attraction and barrier measures are not independent; do not use their composite as an A_flower × B_flower test.")
+    if _composite_only(row):
+        warnings.append("Attraction and barrier are available only as a composite; do not use it as an A_flower × B_flower test.")
+    if _module_status(row) == "separately_measured_raw_not_recovered":
+        warnings.append("A and B were measured separately, but a recoverable individual table is still required for D1 reanalysis.")
 
     attraction, barrier, pollination, antagonist = _channel_presence(row)
     d1_missing = _d1_missing(row)
