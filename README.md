@@ -27,26 +27,56 @@ interaction regime to trait architecture:
 
 ## Active research structure
 
-1. **Part I — theory and simulation.** Derive exact local conditions under which
-   floral attraction and floral barriers are complementary, substitutable, or
-   neutral in the declared score; report parameter regions where the simulated
-   association is stable versus mixed.
+1. **Part I — theory and robustness simulation.** Derive exact local conditions
+   under which floral attraction and floral barriers are complementary,
+   substitutable, or neutral; then test whether the sign persists across
+   alternative response curves and parameter scenarios.
 2. **Part II — reproducible data-route decisions.** Test whether public sources
    can actually supply the matched unit required for an empirical analysis.
-3. **Part III — matched floral-study synthesis.** Test predeclared Part I
-   observation models only with studies that measure floral traits, pollination,
-   floral antagonism, and—where possible—reproductive fitness in the same
-   biological context.
+3. **Part III — four-path effect synthesis and direct cases.** Quantify the
+   separate attraction/barrier effects on pollination and floral antagonism,
+   while retaining exceptional D2/D3 studies as individual validation cases.
 
 ```text
-Part I: model assumptions → exact conditions → simulation phase map
+Part I: model assumptions → exact conditions → functional-form robustness map
 Part II: source feasibility → accepted or retired data routes
-Part III: matched study panels → mechanism paths → fitness curvature where identified
+Part III: four path-specific effect distributions → parameter envelopes → empirical regime map
 ```
 
 The score retains reproductive assurance `R` as a sensitivity term because it can
 dilute the outcross return of attraction. There is no separate global empirical
 `R` module in this first program.
+
+## Part I: robustness before calibration
+
+The baseline score is intentionally qualitative. Before empirical effect sizes
+are used to constrain its parameters, the project tests whether the local
+attraction–barrier mixed partial survives:
+
+```text
+baseline linear responses
++ saturating pollination benefit from attraction
++ saturating defence efficacy against floral antagonists
++ curved shared attraction–defence cost
++ low / baseline / high channel-strength scenarios
+```
+
+The output is not a universal prediction. Each local regime point is labelled:
+
+```text
+structurally_robust
+conditional_majority
+mixed_or_sensitive
+```
+
+Files:
+
+```text
+docs/PART_I_ROBUSTNESS_PROTOCOL.md
+configs/part_i_robustness_grid.json
+trait_architecture/robustness.py
+scripts/run_part_i_robustness.py
+```
 
 ## Part II result: do not force a global database join
 
@@ -97,7 +127,7 @@ The unit is a **study landscape**, not a species name pooled across unrelated
 databases. A D1 panel can identify the interaction-channel balance; only D2/D3
 can compare an observed A×B fitness curvature with a declared Part I scenario.
 
-Files for this active route:
+Files for this direct-case route:
 
 ```text
 empirical/matched_flower_regime/MATCHED_STUDY_PROTOCOL.md
@@ -106,6 +136,34 @@ empirical/matched_flower_regime/literature_seed_queries.csv
 empirical/matched_flower_regime/matched_flower_study_cards.csv
 examples/audit_matched_flower_studies.py
 trait_architecture/matched_regime_registry.py
+```
+
+## Broad empirical route: four-path effect synthesis
+
+Ideal D2/D3 panels may be rare. The broad empirical route therefore retains one
+study × trait × outcome effect at a time and never treats a literature count as
+a theory test.
+
+```text
+A_flower → pollination            b_A
+A_flower → floral antagonism      d_A
+B_flower → floral antagonism      e_F
+B_flower → pollination            c_D
+```
+
+Effects remain separate by outcome scale and design type until a declared
+harmonization rule is justified. They then constrain **parameter envelopes** for
+the Part I robustness sweep; raw coefficients are never silently inserted into
+the fitness score. The shared cost `c_AD` remains a sensitivity parameter unless
+an independent allocation/cost measure is available.
+
+Files:
+
+```text
+empirical/four_path_effects/FOUR_PATH_EFFECT_PROTOCOL.md
+empirical/four_path_effects/four_path_effect_registry.csv
+trait_architecture/four_path_effects.py
+examples/audit_four_path_effects.py
 ```
 
 ## Functional-trait discipline
