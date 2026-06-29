@@ -1,0 +1,42 @@
+name: Inspect Dryad public page route
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/inspect-dryad-public-page.yml"
+  workflow_dispatch:
+
+jobs:
+  inspect_dryad_page:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Retrieve public Dryad dataset landing page
+        run: |
+          curl --location --retry 2 \
+            --user-agent "Mozilla/5.0" \
+            "https://datadryad.org/stash/dataset/doi:10.5061/dryad.0j96d17" \
+            --output dryad_dataset_page.html
+          python - <<'PY'
+          from pathlib import Path
+          html = Path('dryad_dataset_page.html').read_text(encoding='utf-8', errors='replace')
+          needles = ('26621', 'file_stream', 'download', 'api/v2/files')
+          lines = html.splitlines()
+          selected = []
+          for index, line in enumerate(lines):
+              if any(needle in line.lower() for needle in needles):
+                  selected.extend(lines[max(0, index - 2): index + 3])
+          Path('dryad_dataset_page_link_receipt.txt').write_text('\n'.join(dict.fromkeys(selected))[:150000], encoding='utf-8')
+          Path('dryad_dataset_page_summary.txt').write_text(
+              f'html_characters={len(html)}\nmatched_context_lines={len(selected)}\n', encoding='utf-8'
+          )
+          PY
+          rm dryad_dataset_page.html
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: impatiens-dryad-public-page-receipt
+          path: |
+            dryad_dataset_page_link_receipt.txt
+            dryad_dataset_page_summary.txt
+          if-no-files-found: error
