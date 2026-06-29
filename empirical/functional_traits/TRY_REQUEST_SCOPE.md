@@ -1,74 +1,66 @@
-# Functional-trait request scope
+# TRY request scope — optional infrastructure, not the active plan
 
-## Goal
+## Status
 
-Request **record-level** trait data for the oriented Web of Life plant manifest,
-then let the receipt audit decide which traits are usable. The request is not a
-promise that all listed traits will enter the first analysis.
+**Do not submit a TRY request as a dependency of the current project.**
 
-## Priority 1: likely global functional-trait backbone
+The repository contains a request manifest, receipt template, and coverage audit
+because they are useful provenance infrastructure if a collaborator later
+supplies an authorised export. They are not an operational path for the first
+empirical analysis: a custom TRY request and manual download cannot be required
+for a reproducible, scalable workflow.
 
-These are the first traits to request because they map to predeclared modules
-and have the clearest path to broad cross-taxon coverage.
-
-| Trait-role ID | Functional channel | Request concept | First empirical use |
-|---|---|---|---|
-| `flower_size` | `A_flower` | individual flower, corolla, or capitulum size with exact measurement label and unit | pollination-network structure; florivory sensitivity |
-| `inflorescence_display` | `A_flower` | flower number, inflorescence length/area, or other display quantity with exact definition | pollination-network structure |
-| `sla` | `Q_leaf` | specific leaf area or leaf mass per area, preserving which quantity was supplied | leaf-herbivore structure |
-| `ldmc` | `Q_leaf` | leaf dry matter content | leaf-herbivore structure |
-| `leaf_n_mass` | `Q_leaf` | leaf nitrogen concentration on a dry-mass basis | leaf-herbivore structure |
-| `leaf_thickness` | `Q_leaf` | leaf thickness and its unit/protocol | leaf-herbivore structure |
-
-`leaf_p_mass` is a Priority 1 extension if the receipt audit shows enough direct
-coverage after taxonomic reconciliation.
-
-## Priority 2: scientifically valuable but expected to be sparse or heterogeneous
-
-| Trait-role ID | Functional channel | Why conditional |
-|---|---|---|
-| `floral_access` | `A_flower` | geometry measures are not automatically unit-compatible across sources |
-| `nectar_reward` | `A_flower` | volume, concentration, and sugar amount are distinct quantities |
-| `floral_colour_contrast` | `A_flower` | categorical labels are not equivalent to reflectance/contrast measurements |
-| `leaf_toughness` | `B_leaf` | force/area/protocol must be harmonised |
-| `leaf_trichomes` | `B_leaf` | type, location, and glandular state matter |
-| `secondary_metabolites` | `B_leaf` | compound classes and assays are not globally interchangeable |
-
-These may enter a predeclared sensitivity, clade-specific, or source-specific
-analysis only after a separate harmonisation decision.
-
-## Not requested as first global predictors
-
-Do not promote these into the first global request merely because they are
-biologically interesting:
-
-- pollination syndrome;
-- leaf mottling/variegation;
-- generic leaf area, lobing, or shape as a defence proxy;
-- floral/involucral spines, floral sticky secretions, or flower trichomes as a
-  presumed global layer;
-- leaf spines as a generic insect-defence proxy;
-- stem/wood resistance traits for borers;
-- leaf-cutting-bee material suitability.
-
-They remain focused future cases or conditional modules, as recorded in the
-trait-role evidence matrix.
-
-## Request and normalisation requirements
-
-For each provider export, retain or recover:
+## Active rule
 
 ```text
-provider trait label
-value and unit
-record identifier / dataset / publication provenance
-observation level
-measurement method where available
-taxon name returned by provider
-provider accepted name / synonym mapping where available
+No manual, one-off trait request
+→ no dependency in the active global-analysis route.
 ```
 
-Normalise only after retaining the raw export. Map values to the stable
-`trait_id` values using `trait_receipt_template.csv`; retain provider labels and
-conversion notes in the optional provenance fields. Do not impute missing values
-before running `audit_trait_receipt_coverage.py`.
+Only publicly accessible sources that can be retrieved again by code may advance
+to the automated feasibility stage. A source still has to pass the trait-specific
+direct-record and network-metadata coverage gates after it is retrieved.
+
+## What the retained files are for
+
+- `scripts/prepare_try_wol_request.py`: preserves a reproducible taxon manifest
+  for a possible future data-use agreement; it is not a current deliverable.
+- `trait_receipt_template.csv` and `TRAIT_RECEIPT_CONTRACT.md`: preserve
+  record-level provenance if any authorised trait export is received.
+- `audit_trait_receipt_coverage.py`: remains usable for any source, not only
+  TRY, after its records are normalised into the contract.
+
+## Public-data-first trait priorities
+
+The initial automated feasibility screen, when an eligible public source is
+available, focuses on leaf functional traits because they have a clearer
+cross-taxon measurement tradition than floral traits:
+
+```text
+SLA or LMA
+LDMC
+leaf nitrogen concentration
+leaf phosphorus concentration
+leaf thickness
+```
+
+These are `Q_leaf` traits: construction and resource-quality variables, not a
+claim that they are direct defence traits. Mechanical and chemical resistance
+traits remain conditional because units, methods, and compound definitions must
+be comparable.
+
+## Floral traits
+
+No current public global provider has been retained as an automated floral-trait
+backbone for the Web of Life plant set. Flower size, display, reward, colour, and
+access traits can therefore enter only through a **matched-study** route: the
+same study must supply both pollination edges and measured floral traits. They
+must not be backfilled manually across thousands of taxa.
+
+## What not to do
+
+- do not clean or submit the 3,107-name TRY manifest now;
+- do not use a custom trait export as the first empirical milestone;
+- do not replace direct records with gap-filled values in a primary analysis;
+- do not claim that a trait source is adequate before the automated coverage
+  screen passes.
