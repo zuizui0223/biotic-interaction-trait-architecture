@@ -1,10 +1,13 @@
 """Recover Dryad file manifests from explicitly title-validated dataset targets.
 
-This is intentionally narrower than broad repository discovery. A target is
-eligible only when a predeclared expected dataset title exactly matches the title
-returned by the dataset's own DataCite record after conservative normalisation.
-That establishes source identity without pretending it establishes usable trait,
-outcome, denominator, or effect-size columns.
+This module has a deliberately narrow gate: a dataset is eligible only when its
+DataCite title exactly matches the predeclared expected title after conservative
+normalisation. Source identity is therefore explicit before repository-specific
+links are followed.
+
+A recovered manifest still establishes only an inspectable file route. It does
+not establish usable A/B traits, shared biological units, denominators, or a
+four-path effect estimate.
 """
 
 from __future__ import annotations
@@ -15,11 +18,12 @@ import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable, Iterable
-from urllib.parse import quote
+from urllib.parse import quote, urljoin
 from urllib.request import Request, urlopen
 
 
-USER_AGENT = "biotic-interaction-trait-architecture title-validated-dryad-manifest/0.1"
+DRYAD_BASE_URL = "https://datadryad.org"
+USER_AGENT = "biotic-interaction-trait-architecture title-validated-dryad-manifest/0.2"
 REQUIRED_COLUMNS = {
     "target_id", "queue_id", "study_id", "study_doi", "repository", "dataset_doi",
     "expected_dataset_title", "validation_rule", "status",
@@ -114,55 +118,94 @@ def _walk(payload: Any) -> Iterable[dict[str, Any]]:
             yield from _walk(value)
 
 
-def _url(value: object) -> str:
+def _absolute_url(value: object) -> str:
     value = _text(value)
-    return value if value.startswith(("https://", "http://")) else ""
+    return urljoin(DRYAD_BASE_URL, value) if value else ""
+
+
+def _href(payload: Any, relation: str) -> str:
+    if not isinstance(payload, dict):
+        return ""
+    links = payload.get("_links") or payload.get("links")
+    if not isinstance(links, dict):
+        return ""
+    value = links.get(relation)
+    if isinstance(value, dict):
+        value = value.get("href")
+    return _absolute_url(value)
 
 
 def _files(payload: Any) -> list[tuple[str, str]]:
+    """Extract file name/download links, resolving Dryad's relative HAL URLs."""
+
     found: set[tuple[str, str]] = set()
     for node in _walk(payload):
         attrs = node.get("attributes") if isinstance(node.get("attributes"), dict) else node
         if not isinstance(attrs, dict):
             continue
-        name = _text(attrs.get("filename") or attrs.get("file_name") or attrs.get("name"))
-        download = _url(attrs.get("download_url") or attrs.get("content_url"))
-        links = node.get("links") or node.get("_links")
-        if not download and isinstance(links, dict):
-            for key in ("download", "content", "self"):
-                value = links.get(key)
-                if isinstance(value, dict):
-                    value = value.get("href")
-                download = _url(value)
-                if download:
-                    break
+        name = _text(
+            attrs.get("filename") or attrs.get("file_name") or attrs.get("path") or attrs.get("name")
+        )
+        download = _absolute_url(attrs.get("download_url") or attrs.get("content_url"))
+        if not download:
+            links = node.get("_links") or node.get("links")
+            if isinstance(links, dict):
+                for key in ("stash:download", "download", "content"):
+                    value = links.get(key)
+                    if isinstance(value, dict):
+                        value = value.get("href")
+                    download = _absolute_url(value)
+                    if download:
+                        break
         if name and download:
             found.add((name, download))
     return sorted(found)
 
 
-def _file_link_urls(payload: Any) -> list[str]:
-    urls: set[str] = set()
-    for node in _walk(payload):
-        links = node.get("links") or node.get("_links")
-        if not isinstance(links, dict):
-            continue
-        for key, value in links.items():
-            if "file" not in key.lower():
-                continue
-            if isinstance(value, dict):
-                value = value.get("href")
-            link = _url(value)
-            if link:
-                urls.add(link)
-    return sorted(urls)
-
-
 def _dryad_urls(dataset_doi: str) -> tuple[str, str]:
     return (
-        f"https://datadryad.org/api/v2/datasets/{quote(f'doi:{dataset_doi}', safe='')}",
-        f"https://datadryad.org/api/v2/datasets/{quote(dataset_doi, safe='')}",
+        f"{DRYAD_BASE_URL}/api/v2/datasets/{quote(f'doi:{dataset_doi}', safe='')}",
+        f"{DRYAD_BASE_URL}/api/v2/datasets/{quote(dataset_doi, safe='')}",
     )
+
+
+def _fetch_related_payloads(
+    dataset_payload: Any,
+    dataset_url: str,
+    fetch_json: Callable[[str], tuple[int, Any]],
+) -> tuple[list[tuple[str, Any]], list[str], str]:
+    """Follow Dryad's documented dataset → version → files chain once each."""
+
+    payloads: list[tuple[str, Any]] = [(dataset_url, dataset_payload)]
+    visited = {dataset_url}
+    notes: list[str] = []
+
+    version_url = _href(dataset_payload, "stash:version")
+    if version_url and version_url not in visited:
+        try:
+            status, version_payload = fetch_json(version_url)
+            if status >= 400:
+                notes.append(f"version HTTP {status}")
+            else:
+                payloads.append((version_url, version_payload))
+                visited.add(version_url)
+        except Exception as error:
+            notes.append(f"version {type(error).__name__}: {error}")
+
+    for source_url, payload in tuple(payloads):
+        files_url = _href(payload, "stash:files")
+        if not files_url or files_url in visited:
+            continue
+        try:
+            status, files_payload = fetch_json(files_url)
+            if status >= 400:
+                notes.append(f"files HTTP {status}")
+            else:
+                payloads.append((files_url, files_payload))
+                visited.add(files_url)
+        except Exception as error:
+            notes.append(f"files {type(error).__name__}: {error}")
+    return payloads, sorted(visited), "; ".join(notes)
 
 
 def probe_target(
@@ -189,48 +232,41 @@ def probe_target(
             dryad_request_url="", landing_page_url="", file_name="", file_url="",
             notes=f"{type(error).__name__}: {error}",
         )]
+    landing = landing or f"https://doi.org/{dataset_doi}"
     if normalise_title(observed) != normalise_title(row["expected_dataset_title"]):
         return [DryadManifestReceipt(
             **base, observed_dataset_title=observed, title_match="no", manifest_status="title_mismatch",
-            dryad_request_url="", landing_page_url=landing or f"https://doi.org/{dataset_doi}", file_name="", file_url="",
+            dryad_request_url="", landing_page_url=landing, file_name="", file_url="",
             notes="DataCite title does not match the predeclared expected dataset title.",
         )]
 
-    last_error = ""
-    for dryad_url in _dryad_urls(dataset_doi):
+    errors: list[str] = []
+    for dataset_url in _dryad_urls(dataset_doi):
         try:
-            status, payload = fetch_json(dryad_url)
+            status, dataset_payload = fetch_json(dataset_url)
             if status >= 400:
-                last_error = f"HTTP {status}"
+                errors.append(f"{dataset_url} HTTP {status}")
                 continue
-            files = _files(payload)
-            for link in _file_link_urls(payload):
-                try:
-                    link_status, file_payload = fetch_json(link)
-                    if link_status < 400:
-                        files.extend(_files(file_payload))
-                except Exception as error:
-                    last_error = f"file-link {type(error).__name__}: {error}"
-            files = sorted(set(files))
+            payloads, visited, related_notes = _fetch_related_payloads(dataset_payload, dataset_url, fetch_json)
+            files = sorted({file for _, payload in payloads for file in _files(payload)})
+            route = ";".join(visited)
             if files:
                 return [DryadManifestReceipt(
-                    **base, observed_dataset_title=observed, title_match="yes",
-                    manifest_status="manifest_recovered", dryad_request_url=dryad_url,
-                    landing_page_url=landing or f"https://doi.org/{dataset_doi}", file_name=name, file_url=url,
-                    notes="Exact predeclared title matched DataCite metadata; Dryad file manifest recovered.",
+                    **base, observed_dataset_title=observed, title_match="yes", manifest_status="manifest_recovered",
+                    dryad_request_url=route, landing_page_url=landing, file_name=name, file_url=url,
+                    notes="Exact predeclared title matched DataCite metadata; Dryad dataset/version/files manifest chain recovered." + (f" Notes: {related_notes}" if related_notes else ""),
                 ) for name, url in files]
             return [DryadManifestReceipt(
-                **base, observed_dataset_title=observed, title_match="yes",
-                manifest_status="landing_page_only", dryad_request_url=dryad_url,
-                landing_page_url=landing or f"https://doi.org/{dataset_doi}", file_name="", file_url="",
-                notes="Exact predeclared title matched DataCite metadata; Dryad endpoint returned no file metadata.",
+                **base, observed_dataset_title=observed, title_match="yes", manifest_status="landing_page_only",
+                dryad_request_url=route, landing_page_url=landing, file_name="", file_url="",
+                notes="Exact predeclared title matched DataCite metadata, but the Dryad dataset/version/files chain yielded no file metadata." + (f" Notes: {related_notes}" if related_notes else ""),
             )]
         except Exception as error:
-            last_error = f"{type(error).__name__}: {error}"
+            errors.append(f"{dataset_url} {type(error).__name__}: {error}")
     return [DryadManifestReceipt(
         **base, observed_dataset_title=observed, title_match="yes", manifest_status="dryad_access_failed",
-        dryad_request_url=";".join(_dryad_urls(dataset_doi)), landing_page_url=landing or f"https://doi.org/{dataset_doi}",
-        file_name="", file_url="", notes=last_error or "Dryad endpoints did not respond.",
+        dryad_request_url=";".join(_dryad_urls(dataset_doi)), landing_page_url=landing,
+        file_name="", file_url="", notes="; ".join(errors) or "Dryad endpoints did not respond.",
     )]
 
 
