@@ -37,6 +37,11 @@ model assumptions
 → explicit support, contradiction, or non-identifiability
 ```
 
+The current score retains reproductive assurance `R` as a sensitivity term because
+it can dilute the outcross return of attraction. There is no separate empirical
+`R` module in this first study; it is varied in theory rather than treated as a
+third global-data target.
+
 ## Future cases, outside the present backbone
 
 Campanula, Cirsium, and Megachile remain possible future mechanistic cases. They
