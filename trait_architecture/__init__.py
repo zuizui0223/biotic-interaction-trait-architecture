@@ -6,6 +6,14 @@ from .ad_interaction_condition import (
     attraction_defence_cross_partial,
     floral_pressure_threshold_for_complementarity,
 )
+from .matched_regime_registry import (
+    MatchedStudyAuditReport,
+    MatchedStudySummary,
+    audit_matched_study_cards,
+    audit_matched_study_cards_file,
+    classify_matched_study_card,
+    matched_study_report_to_dict,
+)
 from .model import Architecture, FitnessBreakdown, InteractionRegime, ModelParameters, fitness
 from .network_audit import CoverageReport, audit_files, audit_network_coverage, report_to_dict
 from .regime_map import RegimeOptimum, classify_strategy, optimise_architecture, sweep_regimes
@@ -32,6 +40,12 @@ __all__ = [
     "ADLocalRelation",
     "attraction_defence_cross_partial",
     "floral_pressure_threshold_for_complementarity",
+    "MatchedStudyAuditReport",
+    "MatchedStudySummary",
+    "audit_matched_study_cards",
+    "audit_matched_study_cards_file",
+    "classify_matched_study_card",
+    "matched_study_report_to_dict",
     "Architecture",
     "FitnessBreakdown",
     "InteractionRegime",

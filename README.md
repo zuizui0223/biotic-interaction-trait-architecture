@@ -27,22 +27,80 @@ interaction regime to trait architecture:
 
 ## Active research structure
 
-1. **Theory and simulation** — derive the conditions under which attraction and defence are locally complementary, substitutable, or not identified by the current model; then test whether those conclusions are stable across declared parameter scenarios.
-2. **Global interaction-network backbone** — test predeclared observational signatures using plant--pollinator and plant--antagonist networks joined to direct functional-trait modules, taxonomy, study metadata, and phylogeny.
-
-The active program is therefore:
+1. **Part I — theory and simulation.** Derive exact local conditions under which
+   floral attraction and floral barriers are complementary, substitutable, or
+   neutral in the declared score; report parameter regions where the simulated
+   association is stable versus mixed.
+2. **Part II — reproducible data-route decisions.** Test whether public sources
+   can actually supply the matched unit required for an empirical analysis.
+3. **Part III — matched floral-study synthesis.** Test predeclared Part I
+   observation models only with studies that measure floral traits, pollination,
+   and floral antagonism in the same biological context.
 
 ```text
-model assumptions
-→ exact local conditions and simulation sensitivity
-→ source-resolved global-network signatures
-→ explicit support, contradiction, or non-identifiability
+Part I: model assumptions → exact conditions → simulation phase map
+Part II: source feasibility → accepted or retired data routes
+Part III: matched study panels → compatible / contradicts / not identified
 ```
 
-The current score retains reproductive assurance `R` as a sensitivity term because
-it can dilute the outcross return of attraction. There is no separate empirical
-`R` module in this first study; it is varied in theory rather than treated as a
-third global-data target.
+The score retains reproductive assurance `R` as a sensitivity term because it can
+dilute the outcross return of attraction. There is no separate global empirical
+`R` module in this first program.
+
+## Part II result: do not force a global database join
+
+The first public global join has been tested and **is not the active empirical
+backbone**:
+
+```text
+Web of Life × BIEN leaf traits
+  → insufficient trait-provider row coverage on the reproducible screen
+
+GloBI plant–antagonist API claims
+  → lacks the sampled-network identity and effort contract
+
+TRY custom export
+  → optional future infrastructure, not a reproducible active dependency
+```
+
+These are data-route decisions, not negative evidence for the Part I model. The
+project does not replace failed coverage with manual taxon filling, imputation,
+or unmatched joins.
+
+## Direct empirical route: matched floral studies
+
+A direct test of the current Part I \(A_{flower} \times B_{flower}\) result
+requires a study panel with:
+
+```text
+floral attraction trait(s)
++ floral barrier/resistance trait(s)
++ pollination response with denominator
++ floral-antagonist response with denominator
++ same site/time or predeclared overlap
++ a declared linkage unit
++ recoverable table and trait method
+```
+
+The unit is a **study landscape**, not a species name pooled across unrelated
+databases. Evidence is classified before modelling:
+
+```text
+M0  candidate requiring full-text screen
+M1  one-channel or unaligned evidence ledger
+M2  aligned two-channel panel, but incomplete for a direct test
+D1  direct-regime model candidate
+```
+
+Files for this active route:
+
+```text
+empirical/matched_flower_regime/MATCHED_STUDY_PROTOCOL.md
+empirical/matched_flower_regime/literature_seed_queries.csv
+empirical/matched_flower_regime/matched_flower_study_cards.csv
+examples/audit_matched_flower_studies.py
+trait_architecture/matched_regime_registry.py
+```
 
 ## Functional-trait discipline
 
@@ -55,7 +113,7 @@ Q_leaf    leaf construction and resource quality
 B_leaf    leaf structural or chemical resistance
 ```
 
-This prevents three common category errors:
+This prevents three category errors:
 
 - leaf economics traits such as SLA, LDMC, and leaf N are not automatically
   labelled "defence";
@@ -74,27 +132,6 @@ empirical/functional_traits/literature_seed_registry.csv
 docs/functional_trait_model_scope.md
 ```
 
-## Trait receipt and coverage gate
-
-A provider request, a downloaded export, and a model-ready trait table are kept
-separate. Trait-specific coverage is audited against the requested Web of Life
-plant set before modelling. Direct records and imputed values are reported
-separately; only direct records count toward primary-analysis readiness.
-
-```text
-empirical/functional_traits/TRY_REQUEST_SCOPE.md
-empirical/functional_traits/TRAIT_RECEIPT_CONTRACT.md
-empirical/functional_traits/trait_receipt_template.csv
-empirical/functional_traits/trait_source_registry_template.csv
-examples/audit_trait_receipt_coverage.py
-```
-
-## Future cases, outside the present backbone
-
-Campanula, Cirsium, and Megachile remain possible future mechanistic cases. They
-are not necessary for the first theory-plus-global-data study and are not used as
-the current empirical validation backbone.
-
 ## Data discipline
 
 Interaction records are not fitness effects. Trait associations are not
@@ -104,21 +141,12 @@ therefore separates:
 ```text
 interaction architecture
 → trait-associated interaction signatures
-→ future dedicated mechanism tests
+→ dedicated mechanism tests
 ```
 
-Every candidate network source must pass the normalisation and coverage audit in:
-
-```text
-empirical/global_networks/DATA_CONTRACT.md
-docs/theory_to_network_prediction_contract.md
-examples/audit_network_backbone.py
-```
-
-The theory-to-network contract also distinguishes exact conclusions for the
-implemented score from simulation summaries and from empirical trait
-associations. In particular, a positive or negative A--D association observed in
-a dataset is not automatically evidence for a named interaction mechanism.
+A D1 result can be called only `compatible_with_declared_scenario`,
+`contradicts_declared_scenario`, or `not_identified`. It is not proof of
+adaptation unless fitness or selection data are separately included.
 
 ## Boundary with eco-genetic-criticality
 
