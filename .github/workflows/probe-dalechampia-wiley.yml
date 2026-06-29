@@ -1,0 +1,68 @@
+name: Probe Dalechampia article text
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/probe-dalechampia-wiley.yml"
+  workflow_dispatch:
+
+jobs:
+  inspect_dalechampia_article:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Fetch public article page
+        run: |
+          curl --fail --location --retry 2 \
+            --user-agent "Mozilla/5.0 (research evidence screen; github.com/zuizui0223/biotic-interaction-trait-architecture)" \
+            "https://onlinelibrary.wiley.com/doi/full/10.1111/j.1600-0706.2013.20780.x" \
+            --output dalechampia_article.html || true
+
+      - name: Extract trait-function and design snippets
+        run: |
+          python - <<'PY'
+          import html
+          import re
+          from pathlib import Path
+
+          source = Path('dalechampia_article.html')
+          if not source.exists():
+              Path('dalechampia_article_screen_receipt.txt').write_text('article_page_not_retrieved\n', encoding='utf-8')
+              raise SystemExit(0)
+          raw = source.read_text(encoding='utf-8', errors='replace')
+          body = re.sub(r'<script[^>]*>.*?</script>|<style[^>]*>.*?</style>', ' ', raw, flags=re.I | re.S)
+          body = html.unescape(re.sub(r'<[^>]+>', ' ', body))
+          body = re.sub(r'\s+', ' ', body)
+          terms = (
+              'seed predator', 'predation', 'upper bract', 'gland area',
+              'resin', 'advertisement', 'reward', 'pollen transfer',
+              'pollination', 'trait', 'selection',
+          )
+          snippets=[]
+          for term in terms:
+              for match in re.finditer(rf'.{{0,550}}{re.escape(term)}.{{0,1100}}', body, flags=re.I):
+                  value=match.group(0).strip()
+                  if value not in snippets:
+                      snippets.append(value)
+                  if len(snippets)>=30:
+                      break
+              if len(snippets)>=30:
+                  break
+          Path('dalechampia_article_screen_receipt.txt').write_text(
+              '\n\n--- ARTICLE SCREEN SNIPPET ---\n\n'.join(snippets), encoding='utf-8'
+          )
+          Path('dalechampia_article_screen_summary.txt').write_text(
+              f'html_characters={len(raw)}\nplain_text_characters={len(body)}\nsnippet_count={len(snippets)}\n'
+              'A missing or paywalled full text is not evidence that the study lacks a B_flower trait.\n',
+              encoding='utf-8'
+          )
+          PY
+          rm -f dalechampia_article.html
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dalechampia-article-screen-receipt
+          path: |
+            dalechampia_article_screen_receipt.txt
+            dalechampia_article_screen_summary.txt
+          if-no-files-found: error
