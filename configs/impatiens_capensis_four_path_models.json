@@ -1,0 +1,92 @@
+{
+  "study_id": "Gorden_Adler_2018_Impatiens_capensis",
+  "study_doi": "10.1002/ajb2.1182",
+  "dataset_doi": "10.5061/dryad.0j96d17",
+  "unit": "individual plant (Plot_Number)",
+  "scope": "observational trait-path estimates conditional on the randomised supplemental interaction treatments; not a direct causal estimate of trait effects",
+  "primary_trait_modules": {
+    "A_flower": {
+      "field": "Early_Season_Flower_Redness",
+      "definition": "percent of floral lip red-orange on early-season pre-treatment flowers",
+      "transform": "identity_then_zscore",
+      "role_status": "predeclared_attraction_signal_candidate"
+    },
+    "B_flower": {
+      "field": "Early_Season_Condensed_Tannins",
+      "definition": "relative floral condensed tannins in early-season pre-treatment flowers",
+      "transform": "log1p_then_zscore",
+      "role_status": "predeclared_floral_chemical_barrier_candidate"
+    }
+  },
+  "shared_adjustments": [
+    {
+      "field": "Robbing",
+      "coding": "Y_vs_N",
+      "reason": "randomised supplemental nectar-robbing assignment"
+    },
+    {
+      "field": "Florivory",
+      "coding": "Y_vs_N",
+      "reason": "randomised supplemental florivory assignment; natural florivory response excludes imposed damage"
+    },
+    {
+      "field": "Pollination",
+      "coding": "Y_vs_N",
+      "reason": "randomised supplemental pollination assignment"
+    },
+    {
+      "field": "Julian_Date_of_First_CH_Flower",
+      "coding": "zscore",
+      "reason": "seasonal/phenological adjustment"
+    }
+  ],
+  "pathway_models": [
+    {
+      "analysis_id": "impatiens_pollination_path",
+      "outcome_field": "Pollinators_Per_Hour",
+      "outcome_transform": "log1p_then_zscore",
+      "outcome_definition": "average number of pollinator visits in 60 minutes, calculated as average visits in 15 minutes multiplied by four",
+      "exposure_or_denominator": "pollinator visitor surveys; processed outcome standardised to 60 minutes",
+      "effect_roles": ["A_to_pollination", "B_to_pollination"],
+      "model": "ols_hc3: outcome_z ~ A_z + B_z + Robbing_Y + Florivory_Y + Pollination_Y + Julian_Date_z",
+      "interpretation": "conditional observational association with pollinator visitation rate"
+    },
+    {
+      "analysis_id": "impatiens_antagonism_path",
+      "outcome_field": "Average_Percent_Florivory",
+      "outcome_transform": "arcsine_sqrt_percent_then_zscore",
+      "outcome_definition": "average percent flower tissue missing; raw response includes only natural florivory and is surveyed on plants with open CH flowers",
+      "exposure_or_denominator": "raw records contain percent florivory on individual flowers and total open CH flowers per plant survey",
+      "effect_roles": ["A_to_antagonism", "B_to_antagonism"],
+      "model": "ols_hc3: outcome_z ~ A_z + B_z + Robbing_Y + Florivory_Y + Pollination_Y + Julian_Date_z",
+      "interpretation": "conditional observational association with natural floral tissue loss"
+    }
+  ],
+  "fitness_component_models": [
+    {
+      "analysis_id": "impatiens_ch_fruit_surface",
+      "outcome_field": "Average_CH_Fruits_Per_Day",
+      "outcome_transform": "log1p_then_zscore",
+      "outcome_definition": "average count of all chasmogamous fruits per plant per day",
+      "model": "ols_hc3: outcome_z ~ A_z + B_z + A_z:B_z + Robbing_Y + Florivory_Y + Pollination_Y + Julian_Date_z",
+      "interpretation": "fitness-component interaction surface; not full lifetime fitness"
+    },
+    {
+      "analysis_id": "impatiens_ch_seed_surface",
+      "outcome_field": "Average_Seeds_Per_CH_Fruit",
+      "outcome_transform": "log_then_zscore",
+      "outcome_definition": "average count of seeds in each chasmogamous fruit",
+      "model": "ols_hc3: outcome_z ~ A_z + B_z + A_z:B_z + Robbing_Y + Florivory_Y + Pollination_Y + Julian_Date_z",
+      "interpretation": "fitness-component interaction surface on the observed seed subset; not full lifetime fitness"
+    }
+  ],
+  "effect_scale": "standardized_regression_slope",
+  "causal_status": "observational_adjusted",
+  "guardrails": [
+    "Do not interpret treatment-adjusted trait coefficients as causal trait manipulation effects.",
+    "Do not pool A and B trait definitions with alternate floral traits without a new predeclared analysis ID.",
+    "Do not use raw treatment-induced changes in floral traits as the primary A or B predictor; primary traits are pre-treatment.",
+    "Do not call the fitness-component models D2 without a separate identification review.",
+    "Do not calibrate c_AD from these models."
+  ]
+}
