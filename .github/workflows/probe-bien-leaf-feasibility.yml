@@ -1,15 +1,16 @@
-name: Probe BIEN public leaf-trait feasibility
+name: Probe public trait and antagonist-data gates
 
 on:
   pull_request:
     paths:
       - "scripts/probe_bien_wol_leaf_coverage.R"
+      - "scripts/probe_globi_antagonist_contract.py"
       - "scripts/probe_wol_orientation.py"
       - ".github/workflows/probe-bien-leaf-feasibility.yml"
   workflow_dispatch:
 
 jobs:
-  probe:
+  bien_leaf_trait_gate:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -39,5 +40,24 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: bien-leaf-feasibility
+          path: artifacts/
+          if-no-files-found: error
+
+  globi_antagonist_network_gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Test GloBI against the sampled-network contract
+        run: python scripts/probe_globi_antagonist_contract.py artifacts/globi_antagonist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: globi-antagonist-contract
           path: artifacts/
           if-no-files-found: error
