@@ -12,7 +12,7 @@ on:
 jobs:
   bien_leaf_trait_gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
 
@@ -24,18 +24,17 @@ jobs:
         with:
           r-version: "release"
 
-      - name: Install and verify current RBIEN client
+      - name: Install and verify BIEN R namespace
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install --yes libpq-dev
-          Rscript -e 'install.packages(c("jsonlite", "RBIEN"), repos="https://cloud.r-project.org")'
-          Rscript -e 'stopifnot(requireNamespace("RBIEN", quietly=TRUE)); required <- c("BIEN_trait_list", "BIEN_trait_traitbyspecies"); stopifnot(all(required %in% getNamespaceExports("RBIEN"))); cat("RBIEN", as.character(packageVersion("RBIEN")), "ready\n")'
+          sudo apt-get install --yes libpq-dev libgdal-dev libgeos-dev libproj-dev libudunits2-dev
+          Rscript -e 'options(repos = c(CRAN = "https://cloud.r-project.org")); install.packages(c("jsonlite", "remotes", "BIEN"), dependencies = TRUE); if (!requireNamespace("BIEN", quietly = TRUE)) { remotes::install_github("bmaitner/RBIEN", dependencies = TRUE, upgrade = "never") }; stopifnot(requireNamespace("BIEN", quietly = TRUE)); required <- c("BIEN_trait_list", "BIEN_trait_traitbyspecies"); stopifnot(all(required %in% getNamespaceExports("BIEN"))); cat("BIEN", as.character(packageVersion("BIEN")), "ready\n")'
 
       - name: Recover Web of Life plant-side orientation
         run: python scripts/probe_wol_orientation.py artifacts/orientation
 
-      - name: Screen direct RBIEN leaf-trait coverage
+      - name: Screen BIEN leaf-trait provider-row availability
         run: Rscript scripts/probe_bien_wol_leaf_coverage.R artifacts/orientation artifacts/bien_leaf
 
       - uses: actions/upload-artifact@v4
