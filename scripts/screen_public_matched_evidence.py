@@ -23,12 +23,11 @@ import argparse
 import csv
 import json
 import time
-from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, Iterable
 from urllib.error import HTTPError, URLError
-from urllib.parse import parse_qs, urlencode, unquote, urljoin, urlparse
+from urllib.parse import urlencode, unquote, urljoin, urlparse
 from urllib.request import Request, urlopen
 
 
@@ -126,11 +125,12 @@ OUTPUT_FIELDS = [
 ]
 
 
-@dataclass
 class LinkCollector(HTMLParser):
-    links: list[tuple[str, str]] = field(default_factory=list)
-    _current_href: str | None = None
-    _current_text: list[str] = field(default_factory=list)
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.links: list[tuple[str, str]] = []
+        self._current_href: str | None = None
+        self._current_text: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag.lower() != "a":
@@ -180,13 +180,12 @@ def is_repository_url(url: object) -> bool:
 
 
 def is_machine_readable_url(url: object) -> bool:
-    parsed = urlparse(text(url))
-    return parsed.path.lower().endswith(MACHINE_READABLE_SUFFIXES)
+    return urlparse(text(url)).path.lower().endswith(MACHINE_READABLE_SUFFIXES)
 
 
 def contains_supplement_signal(url: object, label: object) -> bool:
-    search_text = f"{text(url)} {text(label)}".lower()
-    return any(term in search_text for term in SUPPLEMENT_TERMS)
+    signal = f"{text(url)} {text(label)}".lower()
+    return any(term in signal for term in SUPPLEMENT_TERMS)
 
 
 def unique(values: Iterable[str]) -> list[str]:
@@ -220,8 +219,7 @@ def choose_landing_page(row: dict[str, str]) -> str:
 
 
 def fetch_html_links(url: str, timeout_seconds: float) -> tuple[str, list[tuple[str, str]], str]:
-    """Fetch a public HTML landing page once, never download PDFs or files."""
-
+    """Fetch one public HTML page; never download a PDF, supplement, or data file."""
     if not url:
         return "not_attempted_no_landing_page", [], ""
     request = Request(url, headers={"Accept": "text/html,application/xhtml+xml", "User-Agent": USER_AGENT})
@@ -238,75 +236,63 @@ def fetch_html_links(url: str, timeout_seconds: float) -> tuple[str, list[tuple[
         return f"url_error_{type(error.reason).__name__}", [], ""
     except TimeoutError:
         return "timeout", [], ""
-    except Exception as error:  # Defensive: a screen failure must not erase a candidate.
+    except Exception as error:
         return f"fetch_error_{type(error).__name__}", [], ""
 
     parser = LinkCollector()
     parser.feed(payload)
-    links = [(urljoin(final_url, href), label) for href, label in parser.links]
-    return "fetched_html", links, final_url
+    return "fetched_html", [(urljoin(final_url, href), label) for href, label in parser.links], final_url
 
 
 def extract_page_resources(links: Iterable[tuple[str, str]]) -> tuple[list[str], list[str], list[str]]:
-    supplement_urls: list[str] = []
-    machine_urls: list[str] = []
-    repository_urls: list[str] = []
+    supplements: list[str] = []
+    machine: list[str] = []
+    repositories: list[str] = []
     for url, label in links:
         if contains_supplement_signal(url, label):
-            supplement_urls.append(url)
+            supplements.append(url)
         if is_machine_readable_url(url):
-            machine_urls.append(url)
+            machine.append(url)
         if is_repository_url(url):
-            repository_urls.append(url)
-    return unique(supplement_urls), unique(machine_urls), unique(repository_urls)
+            repositories.append(url)
+    return unique(supplements), unique(machine), unique(repositories)
 
 
 def datacite_related_datasets(payload: dict[str, Any], article_doi: str) -> list[dict[str, str]]:
-    """Return only non-article DataCite records explicitly related to the DOI."""
-
+    """Return only Dataset/Collection/Software DOI records explicitly linked to the article DOI."""
     results: list[dict[str, str]] = []
-    for item in payload.get("data", []) if isinstance(payload.get("data"), list) else []:
-        if not isinstance(item, dict):
+    data = payload.get("data")
+    for item in data if isinstance(data, list) else []:
+        if not isinstance(item, dict) or not isinstance(item.get("attributes"), dict):
             continue
-        attributes = item.get("attributes")
-        if not isinstance(attributes, dict):
-            continue
+        attributes = item["attributes"]
+        resource_type = text((attributes.get("types") or {}).get("resourceTypeGeneral")).lower() if isinstance(attributes.get("types"), dict) else ""
         dataset_doi = normalise_doi(attributes.get("doi"))
-        if not dataset_doi or dataset_doi == article_doi:
-            continue
-        types = attributes.get("types")
-        resource_type = ""
-        if isinstance(types, dict):
-            resource_type = text(types.get("resourceTypeGeneral")).lower()
-        if resource_type not in DATASET_RESOURCE_TYPES:
+        if resource_type not in DATASET_RESOURCE_TYPES or not dataset_doi or dataset_doi == article_doi:
             continue
         related = attributes.get("relatedIdentifiers")
-        if not isinstance(related, list):
-            continue
-        matched_relations: list[str] = []
-        for relation in related:
-            if not isinstance(relation, dict):
-                continue
-            if normalise_doi(relation.get("relatedIdentifier")) == article_doi:
-                matched_relations.append(text(relation.get("relationType")))
-        if not matched_relations:
-            continue
-        results.append(
-            {
-                "doi": dataset_doi,
-                "url": text(attributes.get("url")) or f"https://doi.org/{dataset_doi}",
-                "relation_types": ";".join(unique(matched_relations)),
-            }
-        )
+        relation_types = [
+            text(relation.get("relationType"))
+            for relation in related if isinstance(related, list)
+            for relation in [relation]
+            if isinstance(relation, dict) and normalise_doi(relation.get("relatedIdentifier")) == article_doi
+        ]
+        if relation_types:
+            results.append(
+                {
+                    "doi": dataset_doi,
+                    "url": text(attributes.get("url")) or f"https://doi.org/{dataset_doi}",
+                    "relation_types": ";".join(unique(relation_types)),
+                }
+            )
     return results
 
 
 def query_datacite(article_doi: str, timeout_seconds: float) -> tuple[str, list[dict[str, str]]]:
     if not article_doi:
         return "not_attempted_no_doi", []
-    query = urlencode({"query": article_doi, "page[size]": "25"})
     request = Request(
-        f"{DATACITE_DOIS_URL}?{query}",
+        f"{DATACITE_DOIS_URL}?{urlencode({'query': article_doi, 'page[size]': '25'})}",
         headers={"Accept": "application/vnd.api+json", "User-Agent": USER_AGENT},
     )
     try:
@@ -318,30 +304,22 @@ def query_datacite(article_doi: str, timeout_seconds: float) -> tuple[str, list[
         return f"url_error_{type(error.reason).__name__}", []
     except TimeoutError:
         return "timeout", []
-    except Exception as error:  # Defensive: retain candidate if metadata endpoint fails.
+    except Exception as error:
         return f"query_error_{type(error).__name__}", []
-    if not isinstance(payload, dict):
-        return "unexpected_payload", []
-    return "queried", datacite_related_datasets(payload, article_doi)
+    return ("queried", datacite_related_datasets(payload, article_doi)) if isinstance(payload, dict) else ("unexpected_payload", [])
 
 
-def public_evidence_action(
-    oa_status: str,
-    supplement_urls: list[str],
-    machine_urls: list[str],
-    repository_urls: list[str],
-    datasets: list[dict[str, str]],
-) -> str:
-    if datasets or machine_urls:
+def public_evidence_action(oa_status: str, supplements: list[str], machine: list[str], repositories: list[str], datasets: list[dict[str, str]]) -> str:
+    if datasets or machine:
         return "retrieve_public_table_then_full_text_screen"
-    if repository_urls or supplement_urls:
+    if repositories or supplements:
         return "inspect_public_repository_or_supplement_then_full_text_screen"
     if oa_status.startswith("openalex_"):
         return "inspect_open_full_text_for_embedded_supplement_or_data_statement"
     return "retain_in_search_universe_check_access_manually_before_exclusion"
 
 
-def priority_score(row: dict[str, str], datasets: list[dict[str, str]], supplement_urls: list[str], machine_urls: list[str], repository_urls: list[str]) -> int:
+def priority_score(row: dict[str, str], datasets: list[dict[str, str]], supplements: list[str], machine: list[str], repositories: list[str]) -> int:
     score = int(text(row.get("metadata_match_score")) or 0) * 10
     if truthy(row.get("is_open_access")):
         score += 8
@@ -349,9 +327,9 @@ def priority_score(row: dict[str, str], datasets: list[dict[str, str]], suppleme
         score += 4
     if is_repository_url(row.get("open_access_url")) or is_repository_url(row.get("landing_page_url")):
         score += 6
-    score += min(3, len(supplement_urls)) * 4
-    score += min(3, len(repository_urls)) * 8
-    score += min(3, len(machine_urls)) * 10
+    score += min(3, len(supplements)) * 4
+    score += min(3, len(repositories)) * 8
+    score += min(3, len(machine)) * 10
     score += min(3, len(datasets)) * 12
     return score
 
@@ -367,14 +345,10 @@ def read_candidates(path: str | Path) -> list[dict[str, str]]:
     return rows
 
 
-def screen_candidates(
-    candidates: Iterable[dict[str, str]],
-    timeout_seconds: float,
-    sleep_seconds: float,
-    fetch_landing_pages: bool,
-) -> tuple[list[dict[str, str]], dict[str, Any]]:
-    rows: list[dict[str, str]] = []
-    counts: dict[str, int] = {
+def screen_candidates(candidates: Iterable[dict[str, str]], timeout_seconds: float, sleep_seconds: float, fetch_landing_pages: bool) -> tuple[list[dict[str, str]], dict[str, Any]]:
+    source_rows = list(candidates)
+    output_rows: list[dict[str, str]] = []
+    counts = {
         "candidates": 0,
         "openalex_linked_oa_url": 0,
         "landing_page_html_fetched": 0,
@@ -384,7 +358,7 @@ def screen_candidates(
         "datacite_related_dataset_discovered": 0,
         "datacite_query_failed": 0,
     }
-    for index, source in enumerate(candidates, start=1):
+    for index, source in enumerate(source_rows, start=1):
         row = {key: text(value) for key, value in source.items()}
         counts["candidates"] += 1
         article_doi = normalise_doi(row.get("doi"))
@@ -392,23 +366,20 @@ def screen_candidates(
         if oa_status == "openalex_linked_oa_url":
             counts["openalex_linked_oa_url"] += 1
 
-        page_status = "not_attempted"
-        links: list[tuple[str, str]] = []
+        page_status, links = "not_attempted", []
         if fetch_landing_pages and truthy(row.get("is_open_access")):
             page_status, links, _ = fetch_html_links(choose_landing_page(row), timeout_seconds)
             if page_status == "fetched_html":
                 counts["landing_page_html_fetched"] += 1
-
-        supplement_urls, machine_urls, repository_urls = extract_page_resources(links)
+        supplements, machine, repositories = extract_page_resources(links)
         metadata_repository = is_repository_url(row.get("open_access_url")) or is_repository_url(row.get("landing_page_url"))
         if metadata_repository:
-            repository_urls = unique([text(row.get("open_access_url")), text(row.get("landing_page_url")), *repository_urls])
-
-        if supplement_urls:
+            repositories = unique([text(row.get("open_access_url")), text(row.get("landing_page_url")), *repositories])
+        if supplements:
             counts["supplement_link_discovered"] += 1
-        if machine_urls:
+        if machine:
             counts["machine_readable_link_discovered"] += 1
-        if repository_urls:
+        if repositories:
             counts["repository_link_discovered"] += 1
 
         datacite_status, datasets = query_datacite(article_doi, timeout_seconds)
@@ -417,45 +388,44 @@ def screen_candidates(
         if datasets:
             counts["datacite_related_dataset_discovered"] += 1
 
-        action = public_evidence_action(oa_status, supplement_urls, machine_urls, repository_urls, datasets)
-        score = priority_score(row, datasets, supplement_urls, machine_urls, repository_urls)
-        output = {
-            "candidate_id": row.get("candidate_id", ""),
-            "seed_routes": row.get("seed_routes", ""),
-            "seed_query_ids": row.get("seed_query_ids", ""),
-            "title": row.get("title", ""),
-            "doi": article_doi,
-            "publication_year": row.get("publication_year", ""),
-            "authors": row.get("authors", ""),
-            "is_open_access": row.get("is_open_access", ""),
-            "open_access_url": row.get("open_access_url", ""),
-            "landing_page_url": row.get("landing_page_url", ""),
-            "metadata_match_score": row.get("metadata_match_score", ""),
-            "metadata_attraction_signal": row.get("metadata_attraction_signal", ""),
-            "metadata_barrier_signal": row.get("metadata_barrier_signal", ""),
-            "metadata_pollination_signal": row.get("metadata_pollination_signal", ""),
-            "metadata_antagonist_signal": row.get("metadata_antagonist_signal", ""),
-            "metadata_recoverability_signal": row.get("metadata_recoverability_signal", ""),
-            "openalex_public_full_text_status": oa_status,
-            "known_repository_from_metadata": str(metadata_repository).lower(),
-            "landing_page_discovery_status": page_status,
-            "supplement_link_count": str(len(supplement_urls)),
-            "supplement_urls": " | ".join(supplement_urls),
-            "machine_readable_link_count": str(len(machine_urls)),
-            "machine_readable_urls": " | ".join(machine_urls),
-            "repository_link_count": str(len(repository_urls)),
-            "repository_urls": " | ".join(repository_urls),
-            "datacite_query_status": datacite_status,
-            "datacite_related_dataset_count": str(len(datasets)),
-            "datacite_related_dataset_dois": " | ".join(item["doi"] for item in datasets),
-            "datacite_related_dataset_urls": " | ".join(item["url"] for item in datasets),
-            "public_evidence_priority_score": str(score),
-            "public_evidence_action": action,
-            "automatic_evidence_level": "M0_candidate_needs_full_text",
-            "automatic_screen_warning": "Positive link discovery is triage only. No missing link is evidence of no data, and no candidate is automatically D1/M2/M1.",
-        }
-        rows.append(output)
-        if sleep_seconds and index < len(list(candidates)):
+        output_rows.append(
+            {
+                "candidate_id": row.get("candidate_id", ""),
+                "seed_routes": row.get("seed_routes", ""),
+                "seed_query_ids": row.get("seed_query_ids", ""),
+                "title": row.get("title", ""),
+                "doi": article_doi,
+                "publication_year": row.get("publication_year", ""),
+                "authors": row.get("authors", ""),
+                "is_open_access": row.get("is_open_access", ""),
+                "open_access_url": row.get("open_access_url", ""),
+                "landing_page_url": row.get("landing_page_url", ""),
+                "metadata_match_score": row.get("metadata_match_score", ""),
+                "metadata_attraction_signal": row.get("metadata_attraction_signal", ""),
+                "metadata_barrier_signal": row.get("metadata_barrier_signal", ""),
+                "metadata_pollination_signal": row.get("metadata_pollination_signal", ""),
+                "metadata_antagonist_signal": row.get("metadata_antagonist_signal", ""),
+                "metadata_recoverability_signal": row.get("metadata_recoverability_signal", ""),
+                "openalex_public_full_text_status": oa_status,
+                "known_repository_from_metadata": str(metadata_repository).lower(),
+                "landing_page_discovery_status": page_status,
+                "supplement_link_count": str(len(supplements)),
+                "supplement_urls": " | ".join(supplements),
+                "machine_readable_link_count": str(len(machine)),
+                "machine_readable_urls": " | ".join(machine),
+                "repository_link_count": str(len(repositories)),
+                "repository_urls": " | ".join(repositories),
+                "datacite_query_status": datacite_status,
+                "datacite_related_dataset_count": str(len(datasets)),
+                "datacite_related_dataset_dois": " | ".join(item["doi"] for item in datasets),
+                "datacite_related_dataset_urls": " | ".join(item["url"] for item in datasets),
+                "public_evidence_priority_score": str(priority_score(row, datasets, supplements, machine, repositories)),
+                "public_evidence_action": public_evidence_action(oa_status, supplements, machine, repositories, datasets),
+                "automatic_evidence_level": "M0_candidate_needs_full_text",
+                "automatic_screen_warning": "Positive link discovery is triage only. No missing link is evidence of no data, and no candidate is automatically D1/M2/M1.",
+            }
+        )
+        if sleep_seconds and index < len(source_rows):
             time.sleep(sleep_seconds)
 
     report = {
@@ -473,7 +443,7 @@ def screen_candidates(
             "Manual full-text and table screening remains required before M1/M2/D1 assignment.",
         ],
     }
-    return rows, report
+    return output_rows, report
 
 
 def write_csv(path: Path, rows: Iterable[dict[str, str]]) -> None:
@@ -497,34 +467,27 @@ def main(argv: list[str] | None = None) -> int:
     if args.sleep_seconds < 0:
         raise SystemExit("--sleep-seconds cannot be negative")
 
-    candidates = read_candidates(args.candidates_csv)
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     rows, report = screen_candidates(
-        candidates,
+        read_candidates(args.candidates_csv),
         timeout_seconds=args.timeout_seconds,
         sleep_seconds=args.sleep_seconds,
         fetch_landing_pages=not args.skip_landing_pages,
     )
-    ranked = sorted(
-        rows,
-        key=lambda row: (-int(row["public_evidence_priority_score"]), row["title"].lower(), row["candidate_id"]),
-    )
-    public_leads = [
-        row
-        for row in ranked
+    ranked = sorted(rows, key=lambda row: (-int(row["public_evidence_priority_score"]), row["title"].lower(), row["candidate_id"]))
+    leads = [
+        row for row in ranked
         if int(row["datacite_related_dataset_count"]) > 0
         or int(row["machine_readable_link_count"]) > 0
         or int(row["repository_link_count"]) > 0
         or int(row["supplement_link_count"]) > 0
     ]
     write_csv(out_dir / "all_candidates_public_evidence_screen.csv", ranked)
-    write_csv(out_dir / "public_resource_positive_leads.csv", public_leads)
+    write_csv(out_dir / "public_resource_positive_leads.csv", leads)
     report["ranked_candidate_count"] = len(ranked)
-    report["positive_public_resource_lead_count"] = len(public_leads)
-    (out_dir / "public_evidence_screen_report.json").write_text(
-        json.dumps(report, indent=2, sort_keys=True), encoding="utf-8"
-    )
+    report["positive_public_resource_lead_count"] = len(leads)
+    (out_dir / "public_evidence_screen_report.json").write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0
 
