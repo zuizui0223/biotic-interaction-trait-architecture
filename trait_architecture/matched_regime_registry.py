@@ -1,12 +1,12 @@
 """Audit study cards for the Part I matched floral-regime route.
 
 The global trait/network route was deliberately retired after reproducible
-source-coverage tests.  This module prevents the replacement literature route
+source-coverage tests. This module prevents the replacement literature route
 from degrading into an unstructured pile of papers: it classifies whether a
 study can contribute only a seed, a one-channel ledger, an aligned two-channel
 panel, or a direct Part I regime test.
 
-No classification is a biological conclusion.  In particular, ``D1`` means that
+No classification is a biological conclusion. In particular, ``D1`` means that
 the *data structure* is suitable for a declared observation model; it does not
 mean the study supports a particular theory scenario.
 """
@@ -34,6 +34,7 @@ REQUIRED_COLUMNS = {
     "plant_taxon_scope",
     "attraction_trait_ids",
     "barrier_trait_ids",
+    "module_separation_status",
     "pollination_response",
     "pollination_denominator",
     "pollination_same_context",
@@ -53,6 +54,7 @@ DIRECT_ALIGNMENT = frozenset({"exact", "predeclared_overlap"})
 LINKABLE_UNITS = frozenset({"individual", "plant_population", "patch", "network"})
 RECOVERABLE_TABLES = frozenset({"supplement", "repository", "available", "author_provided"})
 READ_FULL_TEXT = frozenset({"read", "available"})
+SEPARATE_MODULES = frozenset({"independent", "separately_measured", "separate"})
 
 
 @dataclass(frozen=True)
@@ -117,6 +119,17 @@ def _full_text_read(row: Mapping[str, str]) -> bool:
     return _normalise(row.get("full_text_status")).lower() in READ_FULL_TEXT
 
 
+def _modules_separated(row: Mapping[str, str]) -> bool:
+    """Return whether A_flower and B_flower were measured separately.
+
+    A composite such as floral exsertion relative to a protective bract may be
+    biologically important, but it cannot identify the Part I A × B relation by
+    itself because a change in the composite can arise from either module.
+    """
+
+    return _normalise(row.get("module_separation_status")).lower() in SEPARATE_MODULES
+
+
 def _channel_presence(row: Mapping[str, str]) -> tuple[bool, bool, bool, bool]:
     attraction = bool(_tokens(row.get("attraction_trait_ids")))
     barrier = bool(_tokens(row.get("barrier_trait_ids")))
@@ -132,6 +145,8 @@ def _d1_missing(row: Mapping[str, str]) -> list[str]:
         missing.append("attraction trait")
     if not barrier:
         missing.append("floral barrier/resistance trait")
+    if attraction and barrier and not _modules_separated(row):
+        missing.append("independent A_flower and B_flower measurement")
     if not pollination:
         missing.append("pollination response")
     if not antagonist:
@@ -181,6 +196,8 @@ def classify_matched_study_card(row: Mapping[str, str]) -> MatchedStudySummary:
         warnings.append("No declared study landscape identity.")
     if not _has_value(row.get("sampling_period")):
         warnings.append("No declared sampling period.")
+    if _has_value(row.get("module_separation_status")) and not _modules_separated(row):
+        warnings.append("Attraction and barrier measures are not independent; do not use their composite as an A_flower × B_flower test.")
 
     attraction, barrier, pollination, antagonist = _channel_presence(row)
     d1_missing = _d1_missing(row)
