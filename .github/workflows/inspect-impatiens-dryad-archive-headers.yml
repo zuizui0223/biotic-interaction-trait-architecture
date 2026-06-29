@@ -5,6 +5,7 @@ on:
     paths:
       - "trait_architecture/dryad_archive_schema.py"
       - "scripts/inspect_title_validated_dryad_archive_headers.py"
+      - "scripts/screen_title_validated_dryad_documentation.py"
       - "empirical/four_path_effects/title_validated_dataset_targets.csv"
       - ".github/workflows/inspect-impatiens-dryad-archive-headers.yml"
   workflow_dispatch:
@@ -29,8 +30,20 @@ jobs:
             empirical/four_path_effects/title_validated_dataset_targets.csv \
             artifacts/impatiens_dryad_archive_headers
 
+      - name: Screen README/R documentation for linkage metadata
+        run: |
+          python scripts/screen_title_validated_dryad_documentation.py \
+            empirical/four_path_effects/title_validated_dataset_targets.csv \
+            artifacts/impatiens_dryad_documentation
+
       - uses: actions/upload-artifact@v4
         with:
           name: impatiens-dryad-archive-headers
           path: artifacts/impatiens_dryad_archive_headers/
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: impatiens-dryad-documentation-screen
+          path: artifacts/impatiens_dryad_documentation/
           if-no-files-found: error
