@@ -1,0 +1,31 @@
+name: Inspect Impatiens Dryad version endpoint
+
+on:
+  pull_request:
+    paths:
+      - "scripts/inspect_dryad_version_payload.py"
+      - ".github/workflows/inspect-impatiens-dryad-version.yml"
+  workflow_dispatch:
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Inspect Dryad version metadata
+        run: |
+          python scripts/inspect_dryad_version_payload.py \
+            10.5061/dryad.0j96d17 \
+            artifacts/impatiens_dryad_version
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: impatiens-dryad-version-structure
+          path: artifacts/impatiens_dryad_version/
+          if-no-files-found: error
