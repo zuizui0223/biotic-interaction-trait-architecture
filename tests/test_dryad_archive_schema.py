@@ -1,7 +1,9 @@
 import io
 import zipfile
+from dataclasses import replace
+from unittest.mock import patch
 
-from trait_architecture.dryad_archive_schema import inspect_archive_receipt
+from trait_architecture.dryad_archive_schema import inspect_archive_receipt, inspect_targets
 from trait_architecture.title_validated_dryad_manifest import DryadManifestReceipt
 
 
@@ -44,3 +46,19 @@ def test_archive_access_failure_remains_explicit() -> None:
 
     assert rows[0].schema_status == "archive_access_failed"
     assert "TimeoutError" in rows[0].notes
+
+
+def test_many_manifest_rows_for_one_version_download_one_archive() -> None:
+    receipts = [receipt(), replace(receipt(), file_name="seed.csv", file_url="https://datadryad.org/api/v2/files/2/download")]
+    calls: list[str] = []
+
+    def downloader(url: str, _landing: str) -> bytes:
+        calls.append(url)
+        return zip_bytes()
+
+    with patch("trait_architecture.dryad_archive_schema.probe_targets", return_value=(receipts, {"fixture": True})):
+        rows, report = inspect_targets([], download_archive=downloader)
+
+    assert len(calls) == 1
+    assert len(rows) == 1
+    assert report["archive_schema"]["unique_archives"] == 1
