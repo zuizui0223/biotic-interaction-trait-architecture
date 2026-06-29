@@ -56,37 +56,51 @@ jobs:
 
       - name: Run predeclared four-path and fitness-component models
         run: |
+          mkdir -p artifacts/impatiens_four_path_models
+          set +e
           python scripts/run_impatiens_four_path_models.py \
             configs/impatiens_capensis_four_path_models.json \
             empirical/four_path_effects/title_validated_dataset_targets.csv \
-            artifacts/impatiens_four_path_models
+            artifacts/impatiens_four_path_models \
+            > artifacts/impatiens_four_path_models/model_stdout.log \
+            2> artifacts/impatiens_four_path_models/model_stderr.log
+          status=$?
+          echo "$status" > artifacts/impatiens_four_path_models/model_exit_status.txt
+          cat artifacts/impatiens_four_path_models/model_stdout.log
+          cat artifacts/impatiens_four_path_models/model_stderr.log >&2
+          exit "$status"
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: impatiens-dryad-archive-headers
           path: artifacts/impatiens_dryad_archive_headers/
-          if-no-files-found: error
+          if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: impatiens-dryad-documentation-screen
           path: artifacts/impatiens_dryad_documentation/
-          if-no-files-found: error
+          if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: impatiens-four-path-preanalysis
           path: artifacts/impatiens_four_path_preanalysis/
-          if-no-files-found: error
+          if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: impatiens-variable-definition-dictionary
           path: artifacts/impatiens_variable_dictionary/
-          if-no-files-found: error
+          if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: impatiens-four-path-models
           path: artifacts/impatiens_four_path_models/
-          if-no-files-found: error
+          if-no-files-found: warn
