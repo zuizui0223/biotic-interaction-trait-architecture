@@ -10,7 +10,7 @@ def raw_row(**updates: str) -> dict[str, str]:
         "Robbing": "N",
         "Florivory": "N",
         "Pollination": "Y",
-        "Julian_Date_of_First_CH_Flower": "180",
+        "Date_of_First_CH_Flower": "180",
     }
     row.update(updates)
     return row
@@ -25,6 +25,7 @@ def test_complete_case_preparation_omits_missing_declared_outcome() -> None:
         attraction_transform="identity_then_zscore",
         barrier_field="Early_Season_Condensed_Tannins",
         barrier_transform="log1p_then_zscore",
+        phenology_field="Date_of_First_CH_Flower",
     )
 
     assert len(rows) == 1
@@ -34,9 +35,9 @@ def test_complete_case_preparation_omits_missing_declared_outcome() -> None:
 
 def test_design_matrix_adds_predeclared_interaction_only_when_requested() -> None:
     rows = [
-        {"y": 1.0, "A": 1.0, "B": 1.0, "Robbing_Y": 0.0, "Florivory_Y": 0.0, "Pollination_Y": 0.0, "Julian": 1.0},
-        {"y": 2.0, "A": 2.0, "B": 3.0, "Robbing_Y": 1.0, "Florivory_Y": 0.0, "Pollination_Y": 1.0, "Julian": 2.0},
-        {"y": 3.0, "A": 4.0, "B": 2.0, "Robbing_Y": 0.0, "Florivory_Y": 1.0, "Pollination_Y": 0.0, "Julian": 3.0},
+        {"y": 1.0, "A": 1.0, "B": 1.0, "Robbing_Y": 0.0, "Florivory_Y": 0.0, "Pollination_Y": 0.0, "Phenology": 1.0},
+        {"y": 2.0, "A": 2.0, "B": 3.0, "Robbing_Y": 1.0, "Florivory_Y": 0.0, "Pollination_Y": 1.0, "Phenology": 2.0},
+        {"y": 3.0, "A": 4.0, "B": 2.0, "Robbing_Y": 0.0, "Florivory_Y": 1.0, "Pollination_Y": 0.0, "Phenology": 3.0},
     ]
     _, no_interaction, terms0 = design_matrix(rows, interaction=False)
     _, with_interaction, terms1 = design_matrix(rows, interaction=True)
