@@ -24,6 +24,13 @@ COLUMNS = [
     "antagonist_denominator",
     "antagonist_same_context",
     "site_time_alignment",
+    "attraction_to_pollination_status",
+    "attraction_to_antagonist_status",
+    "barrier_to_antagonist_status",
+    "barrier_to_pollination_status",
+    "fitness_response",
+    "fitness_denominator",
+    "shared_cost_status",
     "raw_table_status",
     "trait_method_status",
     "phylogeny_or_population_structure_status",
@@ -51,13 +58,20 @@ def card(source_id: str, **overrides: str) -> dict[str, str]:
             "attraction_trait_ids": "flower_size",
             "barrier_trait_ids": "floral_chemical_defence",
             "module_separation_status": "independent",
-            "pollination_response": "visit_count",
-            "pollination_denominator": "observation_minutes",
+            "pollination_response": "pollen_transfer",
+            "pollination_denominator": "flowers_observed",
             "pollination_same_context": "yes",
             "antagonist_response": "florivory_damage",
             "antagonist_denominator": "flowers_inspected",
             "antagonist_same_context": "yes",
             "site_time_alignment": "exact",
+            "attraction_to_pollination_status": "estimated",
+            "attraction_to_antagonist_status": "estimated",
+            "barrier_to_antagonist_status": "estimated",
+            "barrier_to_pollination_status": "estimated",
+            "fitness_response": "viable_seed_output",
+            "fitness_denominator": "marked_flowers",
+            "shared_cost_status": "estimated",
             "raw_table_status": "repository",
             "trait_method_status": "reported",
             "phylogeny_or_population_structure_status": "not_applicable",
@@ -68,13 +82,45 @@ def card(source_id: str, **overrides: str) -> dict[str, str]:
     return row
 
 
-def test_complete_card_is_a_direct_regime_model_candidate() -> None:
-    report = audit_matched_study_cards([card("D1")])
+def test_complete_card_is_a_parameterized_score_candidate() -> None:
+    report = audit_matched_study_cards([card("D3")])
     summary = report.summaries[0]
 
-    assert summary.evidence_level == "D1_direct_regime_model_candidate"
+    assert summary.evidence_level == "D3_parameterized_score_candidate"
     assert summary.missing_for_d1 == ()
+    assert summary.missing_for_d2 == ()
+    assert summary.missing_for_d3 == ()
     assert summary.high_information is True
+
+
+def test_four_arrows_without_fitness_are_a_d1_channel_candidate() -> None:
+    report = audit_matched_study_cards(
+        [card("D1", fitness_response="not_observed", fitness_denominator="", shared_cost_status="not_estimated")]
+    )
+    summary = report.summaries[0]
+
+    assert summary.evidence_level == "D1_channel_mechanism_candidate"
+    assert summary.missing_for_d1 == ()
+    assert "total reproductive-fitness response" in summary.missing_for_d2
+
+
+def test_fitness_surface_without_shared_cost_is_a_d2_candidate() -> None:
+    report = audit_matched_study_cards([card("D2", shared_cost_status="not_estimated")])
+    summary = report.summaries[0]
+
+    assert summary.evidence_level == "D2_observed_fitness_surface_candidate"
+    assert summary.missing_for_d2 == ()
+    assert "shared A_flower × B_flower cost/allocation estimate" in summary.missing_for_d3
+
+
+def test_aligned_panel_without_all_four_paths_stays_m2() -> None:
+    report = audit_matched_study_cards(
+        [card("M2", barrier_to_pollination_status="not_estimated")]
+    )
+    summary = report.summaries[0]
+
+    assert summary.evidence_level == "M2_aligned_two_channel_panel"
+    assert "B_flower → pollination effect" in summary.missing_for_d1
 
 
 def test_conflated_attraction_and_barrier_composite_stays_m2() -> None:
@@ -89,11 +135,11 @@ def test_conflated_attraction_and_barrier_composite_stays_m2() -> None:
 
 
 def test_aligned_channels_without_recoverable_table_stay_m2() -> None:
-    report = audit_matched_study_cards([card("M2", raw_table_status="not_found")])
+    report = audit_matched_study_cards([card("M2_table", raw_table_status="not_found")])
     summary = report.summaries[0]
 
     assert summary.evidence_level == "M2_aligned_two_channel_panel"
-    assert "recoverable plant-level table" in summary.missing_for_d1
+    assert "recoverable linked table" in summary.missing_for_d1
 
 
 def test_unaligned_channels_are_not_promoted_to_m2() -> None:
@@ -129,4 +175,4 @@ def test_duplicate_source_id_is_counted_as_invalid() -> None:
     report = audit_matched_study_cards([card("duplicate"), card("duplicate")])
 
     assert report.invalid_cards == 1
-    assert report.counts_by_level["D1_direct_regime_model_candidate"] == 1
+    assert report.counts_by_level["D3_parameterized_score_candidate"] == 1
