@@ -37,6 +37,15 @@ def _run(command: list[str]) -> None:
     subprocess.run(command, cwd=ROOT, check=True)
 
 
+def _manifest_path(path: Path) -> str:
+    """Prefer repo-relative paths, but permit user-supplied external output dirs."""
+
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("out_dir")
@@ -98,10 +107,10 @@ def main(argv: list[str] | None = None) -> int:
             "05_direct_case_audit",
         ],
         "outputs": {
-            "robustness": str(robustness_dir.relative_to(ROOT)),
-            "synthesis": str(synthesis_dir.relative_to(ROOT)),
-            "parameter_bridge": str(bridge_dir.relative_to(ROOT)),
-            "direct_case_audit": str(direct_case_dir.relative_to(ROOT)),
+            "robustness": _manifest_path(robustness_dir),
+            "synthesis": _manifest_path(synthesis_dir),
+            "parameter_bridge": _manifest_path(bridge_dir),
+            "direct_case_audit": _manifest_path(direct_case_dir),
         },
         "all_empirical_channel_envelopes_ready": bridge_report["all_channels_ready"],
         "interpretation": "The pipeline is complete when robustness outputs, effect summaries, bridge readiness, and direct-case audit are all present. Parameter calibration remains blocked until explicit contracts are complete.",
