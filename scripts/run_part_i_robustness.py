@@ -1,9 +1,15 @@
 """Run the predeclared Part I functional-form robustness sweep.
 
-The runner produces a case-level decomposition of the local A×D mixed partial
-and a summary of sign stability across parameter scenarios and functional forms.
-It is deliberately qualitative: no empirical effect size is silently treated as
-a directly calibrated model coefficient.
+The runner produces three linked outputs:
+
+1. every local mixed-partial evaluation;
+2. within-scenario sign stability across alternative functional forms; and
+3. the sign envelope across all predeclared biological parameter scenarios.
+
+This separation matters. Changing a response curve tests functional-form
+robustness, whereas changing tracking, obstruction, or shared-cost coefficients
+tests genuine biological parameter sensitivity. The outputs are qualitative and
+must not be interpreted as empirical parameter estimates.
 
 Usage:
     python scripts/run_part_i_robustness.py \
@@ -53,7 +59,21 @@ CASE_FIELDS = [
     "mixed_partial",
     "sign",
 ]
-SUMMARY_FIELDS = [
+FUNCTIONAL_FORM_SUMMARY_FIELDS = [
+    "case_id",
+    "parameter_scenario_id",
+    "attraction",
+    "defence",
+    "assurance",
+    "pollinator_service",
+    "floral_damage_pressure",
+    "modal_sign",
+    "non_neutral_form_count",
+    "total_form_count",
+    "modal_sign_agreement",
+    "functional_form_class",
+]
+ENVELOPE_SUMMARY_FIELDS = [
     "case_id",
     "attraction",
     "defence",
@@ -64,7 +84,9 @@ SUMMARY_FIELDS = [
     "non_neutral_evaluation_count",
     "total_evaluation_count",
     "modal_sign_agreement",
-    "robustness_class",
+    "envelope_class",
+    "functional_form_robust_scenario_count",
+    "parameter_scenario_count",
 ]
 
 
@@ -151,8 +173,21 @@ def _cases(config: dict[str, Any]) -> tuple[RobustnessCase, ...]:
     )
 
 
-def run(config: dict[str, Any]) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
-    """Evaluate every case across all declared parameter and form scenarios."""
+def _case_dimensions(case: RobustnessCase) -> dict[str, float | str]:
+    return {
+        "case_id": case.case_id,
+        "attraction": case.attraction,
+        "defence": case.defence,
+        "assurance": case.assurance,
+        "pollinator_service": case.pollinator_service,
+        "floral_damage_pressure": case.floral_damage_pressure,
+    }
+
+
+def run(
+    config: dict[str, Any],
+) -> tuple[list[dict[str, object]], list[dict[str, object]], list[dict[str, object]]]:
+    """Return evaluations, within-scenario summaries, and full-envelope summaries."""
 
     tolerance = float(config.get("neutral_tolerance", 1e-12))
     if tolerance < 0:
@@ -161,23 +196,21 @@ def run(config: dict[str, Any]) -> tuple[list[dict[str, object]], list[dict[str,
     scenarios = _parameter_scenarios(config)
     cases = _cases(config)
     case_rows: list[dict[str, object]] = []
-    grouped: dict[str, list[MixedPartialResult]] = {case.case_id: [] for case in cases}
+    grouped_by_scenario: dict[tuple[str, str], list[MixedPartialResult]] = {}
+    grouped_by_case: dict[str, list[MixedPartialResult]] = {case.case_id: [] for case in cases}
 
     for case in cases:
         for scenario_id, parameters in scenarios:
+            scenario_results: list[MixedPartialResult] = []
             for form in forms:
                 result = mixed_partial(case, parameters, form, tolerance=tolerance)
-                grouped[case.case_id].append(result)
+                scenario_results.append(result)
+                grouped_by_case[case.case_id].append(result)
                 case_rows.append(
                     {
-                        "case_id": case.case_id,
+                        **_case_dimensions(case),
                         "parameter_scenario_id": scenario_id,
                         "form_id": form.form_id,
-                        "attraction": case.attraction,
-                        "defence": case.defence,
-                        "assurance": case.assurance,
-                        "pollinator_service": case.pollinator_service,
-                        "floral_damage_pressure": case.floral_damage_pressure,
                         "attraction_gain": parameters.attraction_gain,
                         "attraction_tracking": parameters.attraction_tracking,
                         "floral_defence_efficacy": parameters.floral_defence_efficacy,
@@ -193,28 +226,45 @@ def run(config: dict[str, Any]) -> tuple[list[dict[str, object]], list[dict[str,
                         "sign": result.sign,
                     }
                 )
+            grouped_by_scenario[(case.case_id, scenario_id)] = scenario_results
 
-    summaries: list[dict[str, object]] = []
     by_id = {case.case_id: case for case in cases}
-    for case_id, results in grouped.items():
+    functional_form_summaries: list[dict[str, object]] = []
+    scenario_classes: dict[tuple[str, str], str] = {}
+    for (case_id, scenario_id), results in sorted(grouped_by_scenario.items()):
         summary = summarise_case(results)
-        case = by_id[case_id]
-        summaries.append(
+        scenario_classes[(case_id, scenario_id)] = summary.robustness_class
+        functional_form_summaries.append(
             {
-                "case_id": case_id,
-                "attraction": case.attraction,
-                "defence": case.defence,
-                "assurance": case.assurance,
-                "pollinator_service": case.pollinator_service,
-                "floral_damage_pressure": case.floral_damage_pressure,
+                **_case_dimensions(by_id[case_id]),
+                "parameter_scenario_id": scenario_id,
+                "modal_sign": summary.modal_sign,
+                "non_neutral_form_count": summary.non_neutral_form_count,
+                "total_form_count": summary.total_form_count,
+                "modal_sign_agreement": summary.modal_sign_agreement,
+                "functional_form_class": summary.robustness_class,
+            }
+        )
+
+    envelope_summaries: list[dict[str, object]] = []
+    for case_id, results in sorted(grouped_by_case.items()):
+        summary = summarise_case(results)
+        envelope_summaries.append(
+            {
+                **_case_dimensions(by_id[case_id]),
                 "modal_sign": summary.modal_sign,
                 "non_neutral_evaluation_count": summary.non_neutral_form_count,
                 "total_evaluation_count": summary.total_form_count,
                 "modal_sign_agreement": summary.modal_sign_agreement,
-                "robustness_class": summary.robustness_class,
+                "envelope_class": summary.robustness_class,
+                "functional_form_robust_scenario_count": sum(
+                    scenario_classes[(case_id, scenario_id)] == "structurally_robust"
+                    for scenario_id, _ in scenarios
+                ),
+                "parameter_scenario_count": len(scenarios),
             }
         )
-    return case_rows, summaries
+    return case_rows, functional_form_summaries, envelope_summaries
 
 
 def _write_csv(path: Path, fields: Iterable[str], rows: Iterable[dict[str, object]]) -> None:
@@ -225,6 +275,11 @@ def _write_csv(path: Path, fields: Iterable[str], rows: Iterable[dict[str, objec
             writer.writerow(row)
 
 
+def _class_counts(rows: list[dict[str, object]], column: str) -> dict[str, int]:
+    labels = ("structurally_robust", "conditional_majority", "mixed_or_sensitive")
+    return {label: sum(row[column] == label for row in rows) for label in labels}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("config_json")
@@ -232,19 +287,27 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     config = _read_config(args.config_json)
-    rows, summaries = run(config)
+    rows, form_summaries, envelope_summaries = run(config)
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     _write_csv(out_dir / "part_i_robustness_cases.csv", CASE_FIELDS, rows)
-    _write_csv(out_dir / "part_i_robustness_summary.csv", SUMMARY_FIELDS, summaries)
+    _write_csv(
+        out_dir / "part_i_functional_form_summary.csv",
+        FUNCTIONAL_FORM_SUMMARY_FIELDS,
+        form_summaries,
+    )
+    _write_csv(
+        out_dir / "part_i_robustness_envelope.csv",
+        ENVELOPE_SUMMARY_FIELDS,
+        envelope_summaries,
+    )
     report = {
-        "case_count": len(summaries),
+        "case_count": len(envelope_summaries),
         "evaluation_count": len(rows),
-        "robustness_class_counts": {
-            label: sum(row["robustness_class"] == label for row in summaries)
-            for label in ("structurally_robust", "conditional_majority", "mixed_or_sensitive")
-        },
-        "warning": "Outputs are qualitative functional-form diagnostics, not empirical parameter estimates.",
+        "functional_form_summary_count": len(form_summaries),
+        "functional_form_class_counts": _class_counts(form_summaries, "functional_form_class"),
+        "parameter_envelope_class_counts": _class_counts(envelope_summaries, "envelope_class"),
+        "warning": "Outputs are qualitative diagnostics. Functional-form robustness and biological parameter sensitivity are reported separately.",
     }
     (out_dir / "part_i_robustness_report.json").write_text(
         json.dumps(report, indent=2, sort_keys=True), encoding="utf-8"
