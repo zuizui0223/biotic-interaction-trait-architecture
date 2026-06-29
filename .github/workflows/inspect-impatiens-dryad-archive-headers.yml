@@ -6,6 +6,7 @@ on:
       - "trait_architecture/dryad_archive_schema.py"
       - "scripts/inspect_title_validated_dryad_archive_headers.py"
       - "scripts/screen_title_validated_dryad_documentation.py"
+      - "scripts/audit_impatiens_four_path_data.py"
       - "empirical/four_path_effects/title_validated_dataset_targets.csv"
       - ".github/workflows/inspect-impatiens-dryad-archive-headers.yml"
   workflow_dispatch:
@@ -36,6 +37,12 @@ jobs:
             empirical/four_path_effects/title_validated_dataset_targets.csv \
             artifacts/impatiens_dryad_documentation
 
+      - name: Audit four-path variable availability before fitting
+        run: |
+          python scripts/audit_impatiens_four_path_data.py \
+            empirical/four_path_effects/title_validated_dataset_targets.csv \
+            artifacts/impatiens_four_path_preanalysis
+
       - uses: actions/upload-artifact@v4
         with:
           name: impatiens-dryad-archive-headers
@@ -46,4 +53,10 @@ jobs:
         with:
           name: impatiens-dryad-documentation-screen
           path: artifacts/impatiens_dryad_documentation/
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: impatiens-four-path-preanalysis
+          path: artifacts/impatiens_four_path_preanalysis/
           if-no-files-found: error
