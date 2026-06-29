@@ -4,10 +4,14 @@ on:
   pull_request:
     paths:
       - "trait_architecture/dryad_archive_schema.py"
+      - "trait_architecture/impatiens_models.py"
+      - "trait_architecture/standardized_ols.py"
       - "scripts/inspect_title_validated_dryad_archive_headers.py"
       - "scripts/screen_title_validated_dryad_documentation.py"
       - "scripts/audit_impatiens_four_path_data.py"
       - "scripts/extract_impatiens_variable_dictionary.py"
+      - "scripts/run_impatiens_four_path_models.py"
+      - "configs/impatiens_capensis_four_path_models.json"
       - "empirical/four_path_effects/title_validated_dataset_targets.csv"
       - ".github/workflows/inspect-impatiens-dryad-archive-headers.yml"
   workflow_dispatch:
@@ -50,6 +54,13 @@ jobs:
             empirical/four_path_effects/title_validated_dataset_targets.csv \
             artifacts/impatiens_variable_dictionary
 
+      - name: Run predeclared four-path and fitness-component models
+        run: |
+          python scripts/run_impatiens_four_path_models.py \
+            configs/impatiens_capensis_four_path_models.json \
+            empirical/four_path_effects/title_validated_dataset_targets.csv \
+            artifacts/impatiens_four_path_models
+
       - uses: actions/upload-artifact@v4
         with:
           name: impatiens-dryad-archive-headers
@@ -72,4 +83,10 @@ jobs:
         with:
           name: impatiens-variable-definition-dictionary
           path: artifacts/impatiens_variable_dictionary/
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: impatiens-four-path-models
+          path: artifacts/impatiens_four_path_models/
           if-no-files-found: error
