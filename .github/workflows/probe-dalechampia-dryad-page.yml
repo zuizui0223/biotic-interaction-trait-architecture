@@ -1,0 +1,71 @@
+name: Probe Dalechampia public Dryad package
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/probe-dalechampia-dryad-page.yml"
+  workflow_dispatch:
+
+jobs:
+  inspect_dalechampia_dryad:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Retrieve public Dryad dataset page
+        run: |
+          curl --fail --location --retry 2 \
+            --user-agent "Mozilla/5.0 (research metadata screen; github.com/zuizui0223/biotic-interaction-trait-architecture)" \
+            "https://datadryad.org/stash/dataset/doi:10.5061/dryad.0k6djh9xx" \
+            --output dalechampia_dryad_page.html
+
+      - name: Record package description and file inventory without raw rows
+        run: |
+          python - <<'PY'
+          import html
+          import json
+          import re
+          from pathlib import Path
+
+          raw = Path('dalechampia_dryad_page.html').read_text(encoding='utf-8', errors='replace')
+          plain = re.sub(r'<script[^>]*>.*?</script>|<style[^>]*>.*?</style>', ' ', raw, flags=re.I | re.S)
+          plain = html.unescape(re.sub(r'<[^>]+>', ' ', plain))
+          plain = re.sub(r'\s+', ' ', plain)
+          keywords = ('pollinator', 'seed predat', 'flower', 'trait', 'data from', 'usage notes')
+          snippets = []
+          for key in keywords:
+              for match in re.finditer(rf'.{{0,500}}{re.escape(key)}.{{0,1200}}', plain, flags=re.I):
+                  value = match.group(0).strip()
+                  if value not in snippets:
+                      snippets.append(value)
+                  if len(snippets) >= 20:
+                      break
+              if len(snippets) >= 20:
+                  break
+          files = []
+          for match in re.finditer(r'href="([^"]*(?:downloads/file_stream|api/v2/files)[^"]*)"[^>]*>(.*?)</a>', raw, flags=re.I | re.S):
+              href = html.unescape(match.group(1))
+              label = re.sub(r'<[^>]+>', ' ', html.unescape(match.group(2)))
+              files.append({'href': href, 'label': re.sub(r'\s+', ' ', label).strip()})
+          receipt = {
+              'source_dataset_doi': '10.5061/dryad.0k6djh9xx',
+              'source_article_doi': '10.1111/j.1600-0706.2013.20780.x',
+              'screen_scope': 'public package description and file link labels only; raw rows not retained',
+              'matched_snippets': snippets,
+              'public_file_links': files,
+              'public_file_link_count': len(files),
+          }
+          Path('dalechampia_dryad_package_receipt.json').write_text(json.dumps(receipt, indent=2), encoding='utf-8')
+          Path('dalechampia_dryad_package_summary.txt').write_text(
+              f'html_characters={len(raw)}\nplain_text_characters={len(plain)}\npublic_file_links={len(files)}\n',
+              encoding='utf-8'
+          )
+          PY
+          rm dalechampia_dryad_page.html
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dalechampia-dryad-package-receipt
+          path: |
+            dalechampia_dryad_package_receipt.json
+            dalechampia_dryad_package_summary.txt
+          if-no-files-found: error
