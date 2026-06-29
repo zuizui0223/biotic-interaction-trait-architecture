@@ -1,0 +1,68 @@
+name: Probe Tanacetum full text
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/probe-tanacetum-frontiers.yml"
+  workflow_dispatch:
+
+jobs:
+  probe_tanacetum:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Fetch public Frontiers full text
+        run: |
+          curl --fail --location --retry 2 \
+            --user-agent "Mozilla/5.0 (research metadata screen; contact: github.com/zuizui0223/biotic-interaction-trait-architecture)" \
+            "https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2020.611877/full" \
+            --output tanacetum_full.html
+
+      - name: Extract methods and data-availability evidence snippets
+        run: |
+          python - <<'PY'
+          import html
+          import re
+          from pathlib import Path
+
+          raw = Path('tanacetum_full.html').read_text(encoding='utf-8', errors='replace')
+          text = re.sub(r'<script[^>]*>.*?</script>|<style[^>]*>.*?</style>', ' ', raw, flags=re.I | re.S)
+          text = re.sub(r'<[^>]+>', ' ', text)
+          text = html.unescape(re.sub(r'\s+', ' ', text))
+          patterns = [
+              r'.{0,450}pollinator.{0,900}',
+              r'.{0,450}florivor.{0,900}',
+              r'.{0,450}visitor.{0,900}',
+              r'.{0,450}volatile.{0,900}',
+              r'.{0,450}pollen.{0,900}',
+              r'.{0,450}Data Availability.{0,900}',
+              r'.{0,450}Supplementary Material.{0,900}',
+          ]
+          snippets=[]
+          for pattern in patterns:
+              for match in re.finditer(pattern, text, flags=re.I):
+                  snippet=match.group(0).strip()
+                  if snippet not in snippets:
+                      snippets.append(snippet)
+                  if len(snippets) >= 28:
+                      break
+              if len(snippets) >= 28:
+                  break
+          Path('tanacetum_fulltext_screen_receipt.txt').write_text(
+              '\n\n--- SCREEN SNIPPET ---\n\n'.join(snippets), encoding='utf-8'
+          )
+          Path('tanacetum_fulltext_screen_summary.txt').write_text(
+              f'html_characters={len(raw)}\nplain_text_characters={len(text)}\nsnippet_count={len(snippets)}\n'
+              'This receipt is a full-text discovery aid only; it does not establish D1 eligibility.\n',
+              encoding='utf-8'
+          )
+          PY
+          rm tanacetum_full.html
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tanacetum-fulltext-screen-receipt
+          path: |
+            tanacetum_fulltext_screen_receipt.txt
+            tanacetum_fulltext_screen_summary.txt
+          if-no-files-found: error
