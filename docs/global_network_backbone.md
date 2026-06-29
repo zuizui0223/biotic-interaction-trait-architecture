@@ -1,21 +1,22 @@
-# Global network backbone for validating trait-architecture simulations
+# Global network backbone for testing trait-architecture simulations
 
 ## Role in the program
 
-The regime-map simulation supplies conditional predictions; it does not establish that any empirical regime occurs. The global-network backbone supplies tests of partial observational signatures.
+The regime-map simulation supplies conditional predictions; it does not establish that any empirical regime occurs. The empirical layer can only test **partial observational signatures**, and it must use data sources that are reproducibly obtainable without manual, one-off trait requests.
 
 | Simulation component | Observational signature | Required data |
 |---|---|---|
-| Attraction module \(A\) | plant mutualist degree, weighted visitation, pollinator guild breadth | pollination edges plus a non-circular floral-trait module |
-| Defence module \(D\) | antagonist degree, herbivore/florivore link structure, damage where available | plant-antagonist edges plus a defence-proxy module |
-| Regime-dependent \(\operatorname{Cov}(A,D)\) | changes in within-network attraction--defence association with mutualist/antagonist context | comparable network metadata and separate interaction layers |
-| Reproductive assurance \(R\) | pollinator uncertainty associated with selfing/delayed-selfing traits | a dedicated flowering-plant case study, initially Campanula rather than broad network data |
+| Floral attraction module \(A_{flower}\) | plant mutualist degree, weighted visitation, pollinator guild breadth | pollination edges plus non-circular floral traits measured in the same study/network context |
+| Floral barrier module \(B_{flower}\) | florivore/seed-predator link structure, damage where available | flower/capitulum traits plus antagonist observations from the same study context |
+| Leaf-quality module \(Q_{leaf}\) | leaf-herbivore degree, host breadth, or interaction structure | plant-antagonist networks plus source-resolved, directly observed leaf traits |
+| Leaf-resistance module \(B_{leaf}\) | leaf-herbivore link structure or damage | herbivory networks plus compatible mechanical/chemical resistance traits |
+| Regime-dependent covariance | within-network trait associations conditional on mutualist/antagonist context | matched dual-layer studies; never unmatched global databases |
 
-No single archive is assumed to contain all four components.
+No single archive is assumed to contain all components.
 
 ## Source-contract results
 
-### Web of Life: retained for the pollination edge layer
+### Web of Life: retained only as a pollination edge source
 
 The live Web of Life endpoints passed the source-contract and taxonomic-orientation probes:
 
@@ -23,43 +24,78 @@ The live Web of Life endpoints passed the source-contract and taxonomic-orientat
 - pollination is a large layer whereas plant-herbivore coverage is too small for the defence backbone;
 - plant versus animal side can be recovered for the overwhelming majority of pollination networks by bounded GBIF taxonomic checks.
 
-Web of Life is therefore retained **only** as the candidate pollination-edge layer. It is not the all-guild backbone and it is not by itself a trait source.
+Web of Life is therefore a candidate **pollination-edge** source. It is neither an all-guild backbone nor a trait source.
 
-### BIEN: rejected as the automated floral-trait backbone
+### BIEN: floral trait backbone rejected; leaf trait source remains a feasibility candidate
 
-The live BIEN trait catalog exposes five floral-keyword candidates: `flower color`, `flower pollination syndrome`, `inflorescence length`, `plant flowering begin`, and `plant flowering duration`.
-
-`flower pollination syndrome` is excluded because it encodes the interaction domain to be explained. The two non-circular attraction candidates tested in a deterministic sample of 30 oriented Web of Life pollination networks had low direct-record coverage:
+BIEN was reachable programmatically, but the direct-record screen for two non-circular floral candidates on a deterministic sample of 30 oriented Web of Life pollination networks was poor:
 
 | Trait | Taxa with direct record | Screen coverage |
 |---|---:|---:|
 | flower color | 4 / 30 | 13.3% |
 | inflorescence length | 2 / 30 | 6.7% |
 
-The BIEN API itself was reachable, so this is a coverage failure rather than a technical-access failure. BIEN is retained for optional taxonomic reconciliation and structural covariates, but rejected as the main attraction-trait provider.
+BIEN is therefore rejected as an automated **floral** trait backbone.
 
-## Recommended backbone now
+This result does not establish whether BIEN can support automatic retrieval of
+leaf-economics traits. That is a separate, source-specific feasibility test and
+must use direct records for `SLA/LMA`, `LDMC`, leaf N, leaf P, and leaf thickness.
+Passing that test would establish only trait-source availability; it would not
+turn Web of Life pollination networks into an herbivory analysis.
+
+### TRY: not an active dependency
+
+TRY can supply custom records, but a registered, manually managed data request is
+not a viable dependency for this program. The TRY manifest and receipt utilities
+are retained as optional infrastructure only; no current result, milestone, or
+analysis path waits for a TRY request or download.
+
+## Public-data-first decision sequence
+
+The next empirical task is a **two-gate feasibility test**, using only sources
+that can be retrieved reproducibly by code:
+
+1. **Trait gate:** test whether a public, script-accessible source yields enough
+   *direct* records for each leaf candidate trait on a declared plant set.
+2. **Network gate:** test whether a public plant-antagonist source yields enough
+   independently sampled, metadata-complete herbivory networks for the same
+   plant set and analysis scale.
+
+Only when both gates pass do we run a global leaf-quality/leaf-herbivory model.
+If either fails, we do not manually fill the gaps or use imputed data as a
+substitute; we record the global route as not currently identified and pivot to
+matched-study evidence synthesis.
+
+## What is feasible now
 
 ```text
-Web of Life pollination edges
-  +
-TRY custom trait export for the oriented Web of Life plant set
-  +
-Campanula for the reproductive-assurance causal case
-  +
-a separate antagonist source for the defence module
+Theory + simulation
+    → complete independently of any trait database.
+
+Automated leaf feasibility screen
+    → public leaf-trait provider × a declared network plant set.
+
+Automated herbivory-network feasibility screen
+    → public interaction provider × metadata and sampling contract.
+
+Matched-study floral synthesis
+    → only studies where floral traits and pollination edges were measured in
+      the same study/network context.
 ```
 
-TRY is the appropriate next provider because it supplies customized trait records for selected species and traits. Its Data Explorer exposes content information, whereas actual values are delivered through a registered data request. The request must exclude `pollination syndrome` from predictive trait modules and preserve record-level provenance.
+The floral route is not a 3,000-species trait join. It is a study-level synthesis
+or a future targeted case, because no retained public source currently provides
+adequate, directly measured floral traits across the Web of Life plant set.
 
-`prepare-try-wol-request.yml` generated a deterministic request manifest with **3,107 reported plant taxa**, of which **3,106 are species-rank-like**, across **173 oriented pollination networks**. The artifact is the input to the TRY request, not empirical data itself.
+## Analysis sequence after a route passes
 
-## Analysis sequence
-
-1. Normalise each source into the interaction and metadata contracts in `empirical/global_networks/DATA_CONTRACT.md`.
-2. Run source-contract tests before trait joins or graph metrics.
-3. Freeze a source-specific registry with downloads, checksums, source versions, taxonomic reconciliation, and exclusions.
-4. Analyse pollination and antagonism separately; do not create a composite interaction pressure until a predeclared scale and transformation are justified.
-5. Fit within-network models before cross-network pooling.
-6. Use leave-one-network-out sensitivity and phylogenetic sensitivity before interpreting a trait association.
-7. Treat positive/negative \(A\)--\(D\) associations as conditional signatures, not evidence that a named defence mechanism caused them.
+1. Freeze a source-specific registry with downloads, checksums, source versions,
+   taxonomic reconciliation, and exclusions.
+2. Normalise interactions and metadata into the network contract.
+3. Audit direct trait coverage per trait; do not count imputed values as primary
+   records.
+4. Fit within-network models before cross-network pooling.
+5. Use leave-one-network-out and phylogenetic sensitivity before interpreting an
+   association.
+6. Treat positive/negative trait associations as conditional signatures, not
+   evidence that a named mechanism caused them.
