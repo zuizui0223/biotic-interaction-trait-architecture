@@ -1,7 +1,7 @@
 """Inspect headers of title-validated Dryad CSVs without retaining raw rows.
 
 The aim is structural screening: identify available tables, column names, and
-candidate linkage fields before any model is fitted.  This module downloads only
+candidate linkage fields before any model is fitted. This module downloads only
 the initial bytes needed to parse a header line and writes no raw observations to
 repository outputs.
 """
@@ -11,19 +11,22 @@ from __future__ import annotations
 import csv
 import io
 import json
+import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Callable, Iterable
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from .title_validated_dryad_manifest import DryadManifestReceipt, probe_targets
 
 
-USER_AGENT = "biotic-interaction-trait-architecture dryad-table-schema/0.1"
+USER_AGENT = "biotic-interaction-trait-architecture dryad-table-schema/0.2"
 MAX_HEADER_BYTES = 131_072
 CANDIDATE_KEY_TOKENS = (
     "plant", "individual", "id", "treatment", "block", "plot", "date", "site", "year",
 )
+DRYAD_API_DOWNLOAD_RE = re.compile(r"^https://datadryad\.org/api/v2/files/(\d+)/download$")
 
 
 @dataclass(frozen=True)
@@ -49,10 +52,33 @@ def _text(value: object) -> str:
     return str(value or "").strip()
 
 
-def _download_prefix(url: str, *, timeout: int = 20, max_bytes: int = MAX_HEADER_BYTES) -> bytes:
-    request = Request(url, headers={"User-Agent": USER_AGENT})
-    with urlopen(request, timeout=timeout) as response:  # nosec B310: validated public file URL from a title-gated manifest
+def _request_prefix(url: str, *, timeout: int, max_bytes: int) -> bytes:
+    request = Request(url, headers={"User-Agent": USER_AGENT, "Accept": "text/csv,text/plain,*/*"})
+    with urlopen(request, timeout=timeout) as response:  # nosec B310: title-gated public file route
         return response.read(max_bytes)
+
+
+def _public_file_stream_url(url: str) -> str:
+    match = DRYAD_API_DOWNLOAD_RE.fullmatch(url)
+    return f"https://datadryad.org/stash/downloads/file_stream/{match.group(1)}" if match else ""
+
+
+def _download_prefix(url: str, *, timeout: int = 20, max_bytes: int = MAX_HEADER_BYTES) -> bytes:
+    """Read a small prefix, trying Dryad's public stream when API download is denied."""
+
+    try:
+        return _request_prefix(url, timeout=timeout, max_bytes=max_bytes)
+    except HTTPError as error:
+        fallback = _public_file_stream_url(url)
+        if error.code not in {401, 403} or not fallback:
+            raise
+        try:
+            return _request_prefix(fallback, timeout=timeout, max_bytes=max_bytes)
+        except Exception as fallback_error:
+            raise RuntimeError(
+                f"API download HTTP {error.code}; public file_stream fallback failed: "
+                f"{type(fallback_error).__name__}: {fallback_error}"
+            ) from fallback_error
 
 
 def _header_from_bytes(raw: bytes) -> tuple[str, list[str]]:
