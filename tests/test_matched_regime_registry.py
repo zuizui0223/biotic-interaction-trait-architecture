@@ -16,6 +16,7 @@ COLUMNS = [
     "plant_taxon_scope",
     "attraction_trait_ids",
     "barrier_trait_ids",
+    "module_separation_status",
     "pollination_response",
     "pollination_denominator",
     "pollination_same_context",
@@ -49,6 +50,7 @@ def card(source_id: str, **overrides: str) -> dict[str, str]:
             "plant_taxon_scope": "one species",
             "attraction_trait_ids": "flower_size",
             "barrier_trait_ids": "floral_chemical_defence",
+            "module_separation_status": "independent",
             "pollination_response": "visit_count",
             "pollination_denominator": "observation_minutes",
             "pollination_same_context": "yes",
@@ -73,6 +75,17 @@ def test_complete_card_is_a_direct_regime_model_candidate() -> None:
     assert summary.evidence_level == "D1_direct_regime_model_candidate"
     assert summary.missing_for_d1 == ()
     assert summary.high_information is True
+
+
+def test_conflated_attraction_and_barrier_composite_stays_m2() -> None:
+    report = audit_matched_study_cards(
+        [card("conflated", module_separation_status="conflated_composite")]
+    )
+    summary = report.summaries[0]
+
+    assert summary.evidence_level == "M2_aligned_two_channel_panel"
+    assert "independent A_flower and B_flower measurement" in summary.missing_for_d1
+    assert "Attraction and barrier measures are not independent" in summary.warnings[0]
 
 
 def test_aligned_channels_without_recoverable_table_stay_m2() -> None:
