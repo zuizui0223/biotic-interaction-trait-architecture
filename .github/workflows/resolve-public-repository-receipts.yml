@@ -1,0 +1,33 @@
+name: Resolve public repository receipts
+
+on:
+  pull_request:
+    paths:
+      - "trait_architecture/public_repository_resolver.py"
+      - "scripts/resolve_public_repository_receipts.py"
+      - "empirical/four_path_effects/four_path_screen_queue.csv"
+      - ".github/workflows/resolve-public-repository-receipts.yml"
+  workflow_dispatch:
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Resolve public repository receipts
+        run: |
+          python scripts/resolve_public_repository_receipts.py \
+            empirical/four_path_effects/four_path_screen_queue.csv \
+            artifacts/public_repository_receipts
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: public-repository-receipts
+          path: artifacts/public_repository_receipts/
+          if-no-files-found: error
