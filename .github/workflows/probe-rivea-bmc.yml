@@ -1,0 +1,79 @@
+name: Probe Rivea direct-regime evidence
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/probe-rivea-bmc.yml"
+  workflow_dispatch:
+
+jobs:
+  inspect_rivea:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Fetch public BMC article page
+        run: |
+          curl --fail --location --retry 2 \
+            --user-agent "Mozilla/5.0 (research evidence screen; github.com/zuizui0223/biotic-interaction-trait-architecture)" \
+            "https://link.springer.com/article/10.1186/s12862-024-02301-7" \
+            --output rivea_article.html
+
+      - name: Extract direct-regime evidence and data links
+        run: |
+          python - <<'PY'
+          import html
+          import json
+          import re
+          from pathlib import Path
+          from urllib.parse import urljoin
+
+          raw = Path('rivea_article.html').read_text(encoding='utf-8', errors='replace')
+          body = re.sub(r'<script[^>]*>.*?</script>|<style[^>]*>.*?</style>', ' ', raw, flags=re.I | re.S)
+          body = html.unescape(re.sub(r'<[^>]+>', ' ', body))
+          body = re.sub(r'\s+', ' ', body)
+          terms = (
+              'pollinator attraction', 'florivore defense', 'florivor',
+              'pollinator', 'visitor', 'pollen', 'secondary compound',
+              'resistance', 'defense', 'trichome', 'phenolic', 'alkaloid',
+              'individual plant', 'data availability', 'supplementary information',
+              'dataset', 'seed set', 'fruit set', 'reproductive success',
+          )
+          snippets=[]
+          for term in terms:
+              for match in re.finditer(rf'.{{0,650}}{re.escape(term)}.{{0,1400}}', body, flags=re.I):
+                  value=match.group(0).strip()
+                  if value not in snippets:
+                      snippets.append(value)
+                  if len(snippets)>=40:
+                      break
+              if len(snippets)>=40:
+                  break
+          links=[]
+          for href, label in re.findall(r'<a[^>]+href="([^"]+)"[^>]*>(.*?)</a>', raw, flags=re.I|re.S):
+              label=html.unescape(re.sub(r'<[^>]+>', ' ', label))
+              signal=(href+' '+label).lower()
+              if any(k in signal for k in ('supplement', 'additional', 'data availability', 'dataset', 'figshare', 'dryad', 'zenodo')):
+                  links.append({'url':urljoin('https://link.springer.com', html.unescape(href)), 'label':re.sub(r'\s+', ' ', label).strip()})
+          receipt={
+              'source_article_doi':'10.1186/s12862-024-02301-7',
+              'source_title':'Trades-offs between pollinator attraction and florivore defense maximize reproductive success in the self-incompatible Rivea ornata (Convolvulaceae)',
+              'screen_scope':'full-text snippets and visible public data/supplement links; no raw data retained',
+              'snippets':snippets,
+              'public_data_or_supplement_links':links,
+          }
+          Path('rivea_d1_screen_receipt.json').write_text(json.dumps(receipt, indent=2), encoding='utf-8')
+          Path('rivea_d1_screen_summary.txt').write_text(
+              f'html_characters={len(raw)}\nplain_text_characters={len(body)}\nsnippet_count={len(snippets)}\npublic_links={len(links)}\n'
+              'This receipt is a screen aid; D1 requires manual verification of denominators, linkage, and recoverable tables.\n',
+              encoding='utf-8'
+          )
+          PY
+          rm rivea_article.html
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rivea-d1-screen-receipt
+          path: |
+            rivea_d1_screen_receipt.json
+            rivea_d1_screen_summary.txt
+          if-no-files-found: error
