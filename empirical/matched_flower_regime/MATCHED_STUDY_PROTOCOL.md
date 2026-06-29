@@ -32,9 +32,10 @@ shared cost.
 The direct empirical question is therefore not a generic correlation between two
 traits. It is:
 
-> Within a declared plant–site–time context, are attraction and floral-barrier
-> traits associated with pollination and floral-antagonist observations in a way
-> compatible with a preregistered Part I scenario?
+> Within a declared plant–site–time context, are **separately measured**
+> attraction and floral-barrier traits associated with pollination and
+> floral-antagonist observations in a way compatible with a preregistered Part I
+> scenario?
 
 ## Evidence products
 
@@ -42,8 +43,8 @@ traits. It is:
 |---|---|---|
 | **M0: candidate card** | bibliographic record plus an explicit reason it may contain flower traits, pollination, and floral antagonism | search / acquisition priority only |
 | **M1: channel ledger** | a direct floral trait plus either pollination or floral-antagonist observation, with site or study identity | one-channel descriptive evidence |
-| **M2: aligned two-channel panel** | attraction and floral-barrier traits plus pollination and floral-antagonist observations in same study landscape and overlapping time | component-level joint association; not yet a Part I sign test unless plant-level linkage and denominator are present |
-| **D1: direct regime panel** | M2 plus plant-level (or predefined population-level) linkage, compatible denominators, explicit trait methods, and recoverable table/repository | compatible / contradicts / not identified for a declared Part I observation model |
+| **M2: aligned two-channel panel** | attraction and floral-barrier traits plus pollination and floral-antagonist observations in same study landscape and overlapping time | component-level joint association; may include a biologically meaningful A/B composite, but cannot identify the Part I mixed relation from that composite alone |
+| **D1: direct regime panel** | M2 plus separately measured A_flower and B_flower modules, plant-level (or predefined population-level) linkage, compatible denominators, explicit trait methods, and recoverable table/repository | compatible / contradicts / not identified for a declared Part I observation model |
 
 A paper title, a review statement, or separate datasets joined by taxon name alone
 never exceeds M0.
@@ -62,23 +63,29 @@ A D1 candidate must document all of the following:
    toughness, access limitation, or a separately justified flower-specific
    barrier mechanism.
 
-3. Pollination channel
+3. Module separation
+   A_flower and B_flower must be measured as independently variable modules.
+   A single composite that combines showiness/access and protection cannot test
+   their A_flower × B_flower relation: its change may arise from either module.
+   Such a study can be M2, not D1.
+
+4. Pollination channel
    e.g. visitation with observation denominator, pollen transfer, pollinator
    effectiveness, outcrossing proxy, or reproductive response tied to visitation.
 
-4. Floral antagonist channel
+5. Floral antagonist channel
    e.g. florivory, flower damage, seed predation, nectar robbery, pollen theft,
    or an explicitly flower-attacking antagonist, with a denominator.
 
-5. Alignment
+6. Alignment
    same study landscape plus exact or predeclared-overlap site/time alignment.
 
-6. Linkage
+7. Linkage
    the unit carrying the traits can be linked to both channels at individual,
    plant-population, patch, or network level. The linkage level is declared and
    never silently upgraded.
 
-7. Recoverability
+8. Recoverability
    raw or machine-readable table, supplement, repository data, or a clearly
    defined digitised aggregate. Narrative statements alone do not qualify.
 ```
@@ -97,8 +104,9 @@ A D1 candidate must document all of the following:
 1. Register a candidate as M0 from a reproducible seed query, citation chase,
    repository search, or known study.
 2. Read full text and supplement before assigning any channel status.
-3. Record trait definition, interaction response, denominator, unit of linkage,
-   site, time, and raw-table status.
+3. Record trait definition, whether A and B are independently measured,
+   interaction response, denominator, unit of linkage, site, time, and raw-table
+   status.
 4. Run `examples/audit_matched_flower_studies.py`.
 5. Acquire data in this order:
 
@@ -145,6 +153,6 @@ contradicts_declared_scenario
 not_identified
 ```
 
-`not_identified` is the correct result when any required trait, denominator,
-alignment, or linkage is absent. It is not evidence for absence of a floral
-trade-off or complementarity.
+`not_identified` is the correct result when any required trait, module
+separation, denominator, alignment, or linkage is absent. It is not evidence for
+absence of a floral trade-off or complementarity.
