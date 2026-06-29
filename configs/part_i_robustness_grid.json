@@ -1,0 +1,78 @@
+{
+  "purpose": "Qualitative robustness sweep before empirical parameter calibration",
+  "neutral_tolerance": 1e-10,
+  "phenotype_and_regime_grid": {
+    "attraction": [0.2, 0.5, 0.8],
+    "defence": [0.2, 0.5, 0.8],
+    "assurance": [0.0, 0.5],
+    "pollinator_service": [0.2, 0.5, 0.8],
+    "floral_damage_pressure": [0.2, 0.5, 0.8]
+  },
+  "parameter_scenarios": [
+    {
+      "scenario_id": "low_tracking_low_obstruction_low_shared_cost",
+      "overrides": {
+        "attraction_gain": 0.7,
+        "attraction_tracking": 0.5,
+        "floral_defence_efficacy": 0.5,
+        "defence_pollinator_cost": 0.2,
+        "attraction_defence_shared_cost": 0.03
+      }
+    },
+    {
+      "scenario_id": "baseline",
+      "overrides": {}
+    },
+    {
+      "scenario_id": "high_tracking_low_obstruction_low_shared_cost",
+      "overrides": {
+        "attraction_gain": 1.2,
+        "attraction_tracking": 1.6,
+        "floral_defence_efficacy": 0.9,
+        "defence_pollinator_cost": 0.2,
+        "attraction_defence_shared_cost": 0.03
+      }
+    },
+    {
+      "scenario_id": "high_obstruction_high_shared_cost",
+      "overrides": {
+        "attraction_gain": 1.2,
+        "attraction_tracking": 0.8,
+        "floral_defence_efficacy": 0.6,
+        "defence_pollinator_cost": 0.9,
+        "attraction_defence_shared_cost": 0.25
+      }
+    }
+  ],
+  "functional_forms": [
+    {
+      "form_id": "baseline",
+      "attraction_saturation": 0.0,
+      "defence_half_saturation": null,
+      "shared_cost_curvature": 0.0
+    },
+    {
+      "form_id": "saturating_attraction",
+      "attraction_saturation": 1.0,
+      "defence_half_saturation": null,
+      "shared_cost_curvature": 0.0
+    },
+    {
+      "form_id": "saturating_defence",
+      "attraction_saturation": 0.0,
+      "defence_half_saturation": 0.35,
+      "shared_cost_curvature": 0.0
+    },
+    {
+      "form_id": "saturating_both_curved_cost",
+      "attraction_saturation": 1.0,
+      "defence_half_saturation": 0.35,
+      "shared_cost_curvature": 1.0
+    }
+  ],
+  "interpretation": {
+    "structurally_robust": "One sign across every parameter scenario and functional-form variant at the local case.",
+    "conditional_majority": "At least 80% sign agreement among non-neutral evaluations, but not every evaluation agrees.",
+    "mixed_or_sensitive": "No stable modal sign or any large dependence on assumptions."
+  }
+}

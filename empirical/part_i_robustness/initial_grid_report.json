@@ -1,0 +1,48 @@
+{
+  "run_id": "initial_qualitative_grid_v1",
+  "config_path": "configs/part_i_robustness_grid.json",
+  "runner_path": "scripts/run_part_i_robustness.py",
+  "case_count": 162,
+  "parameter_scenario_count": 4,
+  "functional_form_count": 4,
+  "evaluation_count": 2592,
+  "functional_form_summary_count": 648,
+  "functional_form_class_counts": {
+    "structurally_robust": 395,
+    "conditional_majority": 0,
+    "mixed_or_sensitive": 253
+  },
+  "parameter_envelope_class_counts": {
+    "structurally_robust": 0,
+    "conditional_majority": 27,
+    "mixed_or_sensitive": 135
+  },
+  "scenario_readout": {
+    "high_tracking_low_obstruction_low_shared_cost": {
+      "functional_form_structurally_robust": 130,
+      "functional_form_mixed_or_sensitive": 32,
+      "modal_complementary": 162,
+      "modal_substitutable": 0
+    },
+    "high_obstruction_high_shared_cost": {
+      "functional_form_structurally_robust": 135,
+      "functional_form_mixed_or_sensitive": 27,
+      "modal_complementary": 15,
+      "modal_substitutable": 147
+    },
+    "baseline": {
+      "functional_form_structurally_robust": 67,
+      "functional_form_mixed_or_sensitive": 95,
+      "modal_complementary": 102,
+      "modal_substitutable": 60
+    },
+    "low_tracking_low_obstruction_low_shared_cost": {
+      "functional_form_structurally_robust": 63,
+      "functional_form_mixed_or_sensitive": 99,
+      "modal_complementary": 105,
+      "modal_substitutable": 57
+    }
+  },
+  "interpretation": "The initial broad envelope does not support an unconditional universal sign. Within fixed biological scenarios, many local cases retain their sign across alternative response functions. Across deliberately contrasting biological scenarios, the sign is usually sensitive. This is the expected conditional-regime result, not a failure of the model.",
+  "warning": "This is a qualitative functional-form and parameter-scenario diagnostic. It is not calibrated from empirical effect sizes and does not estimate adaptation or population trait covariance."
+}

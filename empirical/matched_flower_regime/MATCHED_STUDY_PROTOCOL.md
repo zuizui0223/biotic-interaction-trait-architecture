@@ -1,8 +1,8 @@
-# Matched-study protocol for direct floral regime tests
+# Matched-study protocol for floral regime evidence
 
 ## Why the route changes here
 
-The public global-join route has now been assessed and retired for the first
+The public global-join route has been assessed and retired for the first
 empirical test:
 
 ```text
@@ -11,47 +11,58 @@ GloBI plant–antagonist claims   → not a sampled-network backbone
 TRY custom export               → not a reproducible active dependency
 ```
 
-The replacement is not a smaller, less rigorous version of the same join. It is
-a different evidential design: **studies are the unit of integration**. A study
-is eligible only when it records the relevant flower traits and both biotic
-interaction channels in the same biological context.
+The replacement is a different evidential design: **studies are the unit of
+integration**. A study must record traits and interaction channels in a declared
+biological context. It may then contribute one channel, an aligned panel, or a
+directly identifiable part of the Part I model.
 
 ## Link to Part I
 
-Part I derives the exact local relation for the current score:
+The current score has the exact local mixed partial
+
+\[
+\frac{\partial^2 W}{\partial A\,\partial D}
+=
+H d_A e_F
+-
+P b_A c_D e^{-c_DD}(1-c_RR)
+-
+c_{AD}.
+\]
+
+The empirical target is therefore **not** a generic correlation between two
+traits. It is a declared map from floral traits to pollination, floral
+antagonism, and—where available—total reproductive fitness.
+
+The four directional paths in the score are:
 
 ```text
-A_flower × B_flower
+A_flower → pollination            b_A
+A_flower → floral antagonism      d_A
+B_flower → floral antagonism      e_F
+B_flower → pollination            c_D
 ```
 
-where attraction/access and floral barriers/resistance may be locally
-complementary, substitutable, or neutral depending on floral-antagonist tracking,
-barrier efficacy, pollinator-access obstruction, reproductive assurance, and
-shared cost.
+A separately observed allocation or fitness layer is needed to resolve the
+shared `A_flower × B_flower` cost term `c_AD`.
 
-The direct empirical question is therefore not a generic correlation between two
-traits. It is:
-
-> Within a declared plant–site–time context, are **separately measured**
-> attraction and floral-barrier traits associated with pollination and
-> floral-antagonist observations in a way compatible with a preregistered Part I
-> scenario?
-
-## Evidence products
+## Evidence products and permitted claims
 
 | Product | Minimum matched information | Permitted output |
 |---|---|---|
-| **M0: candidate card** | bibliographic record plus an explicit reason it may contain flower traits, pollination, and floral antagonism | search / acquisition priority only |
-| **M1: channel ledger** | a direct floral trait plus either pollination or floral-antagonist observation, with site or study identity | one-channel descriptive evidence |
-| **M2: aligned two-channel panel** | attraction and floral-barrier traits plus pollination and floral-antagonist observations in same study landscape and overlapping time | component-level joint association; may include a biologically meaningful A/B composite, but cannot identify the Part I mixed relation from that composite alone |
-| **D1: direct regime panel** | M2 plus separately measured A_flower and B_flower modules, plant-level (or predefined population-level) linkage, compatible denominators, explicit trait methods, and recoverable table/repository | compatible / contradicts / not identified for a declared Part I observation model |
+| **M0: candidate card** | bibliographic record plus explicit reason it may contain flower traits, pollination, and floral antagonism | search/acquisition priority only |
+| **M1: channel ledger** | a direct floral trait plus either pollination or floral-antagonist observation, with site/study identity | one-channel mechanism evidence |
+| **M2: aligned two-channel panel** | A/B traits plus pollination and floral-antagonist observations in the same study landscape and overlapping time, but one or more directional paths are unestimated | aligned component panel; no Part I curvature claim |
+| **D1: channel-mechanism panel** | M2 plus estimable `A→P`, `A→H`, `B→H`, and `B→P` effects in a declared unit/context | identify the two interaction-channel terms conditional on an observation model; total sign remains unresolved without fitness/cost |
+| **D2: observed fitness-surface panel** | D1 plus reproductive-fitness response and denominator on the linked unit | estimate conditional observed A×B fitness curvature; compatible/contradictory/not-identified for a declared scenario, not causal adaptation by default |
+| **D3: parameterized score panel** | D2 plus independent shared-cost/allocation evidence or explicit validated calibration | compare the full empirical parameterization with the Part I expression |
 
-A paper title, a review statement, or separate datasets joined by taxon name alone
-never exceeds M0.
+A paper title, review statement, or datasets joined only by taxon name never
+exceeds M0.
 
 ## Non-negotiable matching rules
 
-A D1 candidate must document all of the following:
+Every D1+ candidate must document the following baseline structure:
 
 ```text
 1. Floral attraction trait(s)
@@ -60,35 +71,43 @@ A D1 candidate must document all of the following:
 
 2. Floral barrier/resistance trait(s)
    e.g. floral chemical defence, structural protection, trichomes/spines,
-   toughness, access limitation, or a separately justified flower-specific
+   toughness, access limitation, or another separately justified flower-specific
    barrier mechanism.
 
 3. Module separation
-   A_flower and B_flower must be measured as independently variable modules.
-   A single composite that combines showiness/access and protection cannot test
-   their A_flower × B_flower relation: its change may arise from either module.
-   Such a study can be M2, not D1.
+   A_flower and B_flower are independently measured. A single composite that
+   combines display/access and protection cannot test A_flower × B_flower.
 
-4. Pollination channel
-   e.g. visitation with observation denominator, pollen transfer, pollinator
-   effectiveness, outcrossing proxy, or reproductive response tied to visitation.
+4. Pollination response and denominator
+   e.g. standardised visitation, pollen transfer, pollinator effectiveness,
+   outcrossing proxy, or reproductive response tied to visitation.
 
-5. Floral antagonist channel
+5. Floral-antagonist response and denominator
    e.g. florivory, flower damage, seed predation, nectar robbery, pollen theft,
-   or an explicitly flower-attacking antagonist, with a denominator.
+   or another flower-attacking antagonist.
 
-6. Alignment
-   same study landscape plus exact or predeclared-overlap site/time alignment.
+6. Alignment and linkage
+   exact or predeclared-overlap site/time alignment; individual, plant-population,
+   patch, or network linkage is declared and never silently upgraded.
 
-7. Linkage
-   the unit carrying the traits can be linked to both channels at individual,
-   plant-population, patch, or network level. The linkage level is declared and
-   never silently upgraded.
-
-8. Recoverability
-   raw or machine-readable table, supplement, repository data, or a clearly
-   defined digitised aggregate. Narrative statements alone do not qualify.
+7. Recoverability
+   raw/machine-readable table, supplement, repository data, or clearly defined
+   aggregate. Narrative claims alone do not qualify.
 ```
+
+D1 adds direct estimation or manipulation evidence for all four arrows:
+
+```text
+A_flower → pollination
+A_flower → floral antagonism
+B_flower → floral antagonism
+B_flower → pollination
+```
+
+D2 adds a total reproductive-fitness response, for example viable seeds per
+marked flower/plant, fruit set with a declared flower denominator, or a
+predeclared lifetime-fitness proxy. D3 additionally resolves shared cost by an
+allocation measure or transparent calibration.
 
 ## What belongs outside this route
 
@@ -97,55 +116,62 @@ A D1 candidate must document all of the following:
 - interaction claims pooled across studies without study-specific sampling;
 - floral traits and florivory measured in different years/sites without a
   declared alignment model;
-- global taxon joins using trait imputations as though they were observations.
+- global taxon joins using trait imputations as though they were observations;
+- studies that call a trait defensive but do not estimate its effect on floral
+  antagonism or pollination.
 
 ## Study-card workflow
 
-1. Register a candidate as M0 from a reproducible seed query, citation chase,
+1. Register an M0 candidate through a reproducible seed query, citation chase,
    repository search, or known study.
 2. Read full text and supplement before assigning any channel status.
-3. Record trait definition, whether A and B are independently measured,
-   interaction response, denominator, unit of linkage, site, time, and raw-table
-   status.
-4. Run `examples/audit_matched_flower_studies.py`.
-5. Acquire data in this order:
+3. Record trait definitions, whether A and B are independently measured,
+   response denominators, linkage, site, time, raw-table status, and the status
+   of each of the four directional arrows.
+4. Record whether total reproductive fitness is observed and whether shared cost
+   is measured, calibrated, or unresolved.
+5. Run `examples/audit_matched_flower_studies.py`.
+6. Acquire data in this order:
 
    ```text
    supplement / repository
    → machine-readable appendix
    → author-provided table
-   → aggregate figure digitisation (only descriptive or explicitly aggregate)
+   → aggregate figure digitisation (M1/M2 descriptive use only)
    → exclude
    ```
 
-6. Freeze the registry before modelling. Do not add studies after seeing a
-   pooled sign unless the addition follows the predeclared search/citation route.
+7. Freeze the registry before modelling. Do not add studies after seeing a
+   pooled sign unless they arise from the predeclared search/citation route.
 
-## Route expansion rule
+## Search priority
 
-Screen 15 high-information M0 candidates from each of three seed routes:
+Prioritise studies in this order:
 
 ```text
-A. floral-trait × florivory / flower-damage studies
-B. floral-scent or reward × pollinator + antagonist studies
-C. pollination / florivory / seed-predation studies with plant-level tables
+A. factorial or quasi-factorial A/B manipulation with reproductive fitness
+B. individual-level A/B traits + both channels + viable seed/fruit response
+C. studies estimating all four directional paths in one matched panel
+D. aligned trait/pollination/florivory panels missing one or more arrows
+E. one-channel floral mechanism studies
 ```
 
-A candidate is high-information only when metadata or full text indicates at
-least one of: a trait table, visitor counts, floral-damage counts, seed-predation
-counts, individual/plant identifiers, a stated site-period, or an accessible
-supplement/repository.
+A candidate is high-information when metadata/full text indicates at least one
+of: trait table, visitor counts, floral-damage counts, seed-predation counts,
+individual/plant identifiers, a stated site-period, total fitness, or an
+accessible supplement/repository.
 
 After each 15-card block:
 
-- **>= 3 D1 or M2 cards:** expand that route and retrieve tables;
-- **1–2 D1 or M2 cards:** retain as a secondary route and citation-chase;
-- **0 D1/M2 but >= 3 M1 cards:** retain as a descriptive mechanism ledger;
+- **>= 2 D1–D3 cards:** expand that route and retrieve tables;
+- **1 D1–D3 card:** retain as the primary route and citation-chase;
+- **>= 3 M2 cards:** retain as a mechanism panel route; do not claim curvature;
+- **>= 3 M1 cards:** retain as a descriptive mechanism ledger;
 - **0 useful cards:** stop that route.
 
 ## Interpretation categories
 
-A D1 result can be labelled only as:
+A D2 or D3 result may be labelled only as:
 
 ```text
 compatible_with_declared_scenario
@@ -153,6 +179,7 @@ contradicts_declared_scenario
 not_identified
 ```
 
-`not_identified` is the correct result when any required trait, module
-separation, denominator, alignment, or linkage is absent. It is not evidence for
-absence of a floral trade-off or complementarity.
+D1 identifies channel balance, not the total Part I sign. `not_identified` is
+the correct result whenever an arrow, fitness response, module separation,
+denominator, alignment, linkage, or recoverable table is absent. It is not
+evidence for absence of a floral trade-off or complementarity.

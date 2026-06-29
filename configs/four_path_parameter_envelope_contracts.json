@@ -1,0 +1,67 @@
+{
+  "bridge_id": "four_path_parameter_envelopes_v1",
+  "purpose": "Explicit manual bridge from scale-specific effect summaries to dimensionless Part I parameter envelopes",
+  "contracts": [
+    {
+      "contract_id": "b_A_from_A_to_pollination",
+      "target_parameter": "attraction_gain",
+      "effect_role": "A_to_pollination",
+      "effect_measure": "standardized_regression_slope",
+      "causal_status": "manipulated",
+      "calibration_status": "awaiting_synthesis",
+      "proxy_justification": "",
+      "source_selector": "",
+      "low": null,
+      "mid": null,
+      "high": null,
+      "notes": "Use pollen transfer/effectiveness or a separately justified visitation-to-service proxy."
+    },
+    {
+      "contract_id": "d_A_from_A_to_antagonism",
+      "target_parameter": "attraction_tracking",
+      "effect_role": "A_to_antagonism",
+      "effect_measure": "standardized_regression_slope",
+      "causal_status": "manipulated",
+      "calibration_status": "awaiting_synthesis",
+      "proxy_justification": "",
+      "source_selector": "",
+      "low": null,
+      "mid": null,
+      "high": null,
+      "notes": "Use a flower-stage antagonist outcome with an explicit at-risk denominator."
+    },
+    {
+      "contract_id": "e_F_from_B_to_antagonism",
+      "target_parameter": "floral_defence_efficacy",
+      "effect_role": "B_to_antagonism",
+      "effect_measure": "standardized_regression_slope",
+      "causal_status": "manipulated",
+      "calibration_status": "awaiting_synthesis",
+      "proxy_justification": "",
+      "source_selector": "",
+      "low": null,
+      "mid": null,
+      "high": null,
+      "notes": "Values must lie in [0,1] under the present model; explain any bounded mapping."
+    },
+    {
+      "contract_id": "c_D_from_B_to_pollination",
+      "target_parameter": "defence_pollinator_cost",
+      "effect_role": "B_to_pollination",
+      "effect_measure": "standardized_regression_slope",
+      "causal_status": "manipulated",
+      "calibration_status": "awaiting_synthesis",
+      "proxy_justification": "",
+      "source_selector": "",
+      "low": null,
+      "mid": null,
+      "high": null,
+      "notes": "Use direct barrier-caused access/pollination reduction, not a generic trait–visitor association."
+    }
+  ],
+  "unresolved_parameter": {
+    "target_parameter": "attraction_defence_shared_cost",
+    "calibration_status": "scenario_only",
+    "notes": "Do not estimate from trait covariance. Requires independent allocation/cost evidence for an empirical calibration."
+  }
+}

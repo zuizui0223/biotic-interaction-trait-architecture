@@ -1,167 +1,137 @@
 # Biotic Interaction Trait Architecture
 
-A theory-to-data research program on how plants organise **floral attraction**,
-**floral barriers**, **leaf resource quality**, and **leaf resistance** under
-contrasting biotic interaction regimes.
+A theory-to-data research program on how floral attraction and floral barriers
+are shaped by mutualist and antagonist regimes.
 
 ## Core question
 
-For a trait architecture
+For floral attraction/access \(A\) and floral barrier/resistance \(D\), when do
+biotic interactions favour complementarity, substitutability, or neutrality?
 
-\[
-\mathbf z=(A,D),
-\]
-
-how do mutualist and antagonist regimes alter the favoured combinations of
-functional trait modules?
-
-- \(A\): flower-facing attraction and access — floral display, size, reward, geometry, colour/contrast, orientation;
-- \(D\): a deliberately abstract resistance/access-limitation channel. In empirical work it is split by organ and mechanism rather than filled with a single pooled defence score.
-
-The central output is not a universal trade-off. It is a conditional map from
-interaction regime to trait architecture:
+The target is a conditional regime map, not a universal trait trade-off:
 
 \[
 \mathcal I \longmapsto \mathbf z^*.
 \]
 
-## Active research structure
-
-1. **Part I — theory and simulation.** Derive exact local conditions under which
-   floral attraction and floral barriers are complementary, substitutable, or
-   neutral in the declared score; report parameter regions where the simulated
-   association is stable versus mixed.
-2. **Part II — reproducible data-route decisions.** Test whether public sources
-   can actually supply the matched unit required for an empirical analysis.
-3. **Part III — matched floral-study synthesis.** Test predeclared Part I
-   observation models only with studies that measure floral traits, pollination,
-   and floral antagonism in the same biological context.
+## Research architecture
 
 ```text
-Part I: model assumptions → exact conditions → simulation phase map
-Part II: source feasibility → accepted or retired data routes
-Part III: matched study panels → compatible / contradicts / not identified
+Part I   exact score condition → functional-form robustness map
+Part II  reproducible public-data feasibility decisions
+Part III four path-specific effect synthesis → parameter envelopes → empirical regime map
 ```
 
-The score retains reproductive assurance `R` as a sensitivity term because it can
-dilute the outcross return of attraction. There is no separate global empirical
-`R` module in this first program.
+### Part I: robustness before calibration
 
-## Part II result: do not force a global database join
-
-The first public global join has been tested and **is not the active empirical
-backbone**:
+The baseline score is qualitative. Before empirical effects are used to constrain
+it, the local mixed partial is tested across:
 
 ```text
-Web of Life × BIEN leaf traits
-  → insufficient trait-provider row coverage on the reproducible screen
-
-GloBI plant–antagonist API claims
-  → lacks the sampled-network identity and effort contract
-
-TRY custom export
-  → optional future infrastructure, not a reproducible active dependency
+linear versus saturating attraction benefit
+linear versus saturating floral defence efficacy
+linear versus escalating shared A×D cost
+low / baseline / high channel-strength scenarios
+local grids of A, D, R, pollinator service P, and floral damage pressure H
 ```
 
-These are data-route decisions, not negative evidence for the Part I model. The
-project does not replace failed coverage with manual taxon filling, imputation,
-or unmatched joins.
-
-## Direct empirical route: matched floral studies
-
-A direct test of the current Part I \(A_{flower} \times B_{flower}\) result
-requires a study panel with:
+Each point is labelled:
 
 ```text
-floral attraction trait(s)
-+ floral barrier/resistance trait(s)
-+ pollination response with denominator
-+ floral-antagonist response with denominator
-+ same site/time or predeclared overlap
-+ a declared linkage unit
-+ recoverable table and trait method
+structurally_robust
+conditional_majority
+mixed_or_sensitive
 ```
 
-The unit is a **study landscape**, not a species name pooled across unrelated
-databases. Evidence is classified before modelling:
+Key files:
 
 ```text
-M0  candidate requiring full-text screen
-M1  one-channel or unaligned evidence ledger
-M2  aligned two-channel panel, but incomplete for a direct test
-D1  direct-regime model candidate
+docs/PART_I_ROBUSTNESS_PROTOCOL.md
+configs/part_i_robustness_grid.json
+trait_architecture/robustness.py
+scripts/run_part_i_robustness.py
 ```
 
-Files for this active route:
+### Part II: do not force a global join
+
+The initial global routes are not the active empirical backbone:
+
+```text
+Web of Life × BIEN leaf traits  → insufficient reproducible trait coverage
+GloBI antagonist claims         → no sampled-network/effort contract
+TRY custom export               → not an active reproducible dependency
+```
+
+These are feasibility findings, not negative evidence against Part I.
+
+### Part III-A: direct matched-study cases
+
+A direct case concerns local fitness curvature, not raw trait covariance. The
+four directional paths are:
+
+```text
+A_flower → pollination            b_A
+A_flower → floral antagonism      d_A
+B_flower → floral antagonism      e_F
+B_flower → pollination            c_D
+```
+
+```text
+M0  discovery candidate
+M1  one-channel or unaligned evidence
+M2  aligned two-channel panel with missing paths
+D1  four-arrow channel-mechanism panel
+D2  D1 plus linked reproductive-fitness surface
+D3  D2 plus independently measured/calibrated shared A×B cost
+```
+
+Key files:
 
 ```text
 empirical/matched_flower_regime/MATCHED_STUDY_PROTOCOL.md
-empirical/matched_flower_regime/literature_seed_queries.csv
-empirical/matched_flower_regime/matched_flower_study_cards.csv
-examples/audit_matched_flower_studies.py
+docs/theory_empirical_identifiability_reassessment.md
 trait_architecture/matched_regime_registry.py
 ```
 
-## Functional-trait discipline
+### Part III-B: broad four-path effect synthesis
 
-The empirical layer distinguishes four functional channels:
-
-```text
-A_flower  floral attraction and visitor access
-B_flower  floral/reproductive-structure barriers and florivore resistance
-Q_leaf    leaf construction and resource quality
-B_leaf    leaf structural or chemical resistance
-```
-
-This prevents three category errors:
-
-- leaf economics traits such as SLA, LDMC, and leaf N are not automatically
-  labelled "defence";
-- floral bract spines and leaf spines are not pooled despite being visually
-  similar; and
-- leaf mottling, generic leaf shape, stem/wood traits, and leaf-cutting-bee
-  material suitability are not promoted into a defence model without a direct
-  functional bridge.
-
-The evidence matrix and model-scope decision are maintained in:
+Ideal D2/D3 cases may be rare. The broad route therefore records one
+`study × trait × outcome × model effect` at a time, retaining scale and design
+rather than forcing all studies into one pooled value.
 
 ```text
-empirical/functional_traits/TRAIT_EVIDENCE_PROTOCOL.md
-empirical/functional_traits/trait_role_evidence.csv
-empirical/functional_traits/literature_seed_registry.csv
-docs/functional_trait_model_scope.md
+A_to_pollination
+A_to_antagonism
+B_to_antagonism
+B_to_pollination
 ```
 
-## Data discipline
+Role-specific effect distributions later constrain parameter envelopes for the
+Part I robustness sweep. Raw coefficients are never inserted directly into the
+fitness score, and shared cost \(c_{AD}\) remains a sensitivity parameter until
+allocation/cost evidence exists.
 
-Interaction records are not fitness effects. Trait associations are not
-automatically selection, defence efficacy, or adaptation. The empirical program
-therefore separates:
+Key files:
 
 ```text
-interaction architecture
-→ trait-associated interaction signatures
-→ dedicated mechanism tests
+empirical/four_path_effects/FOUR_PATH_EFFECT_PROTOCOL.md
+empirical/four_path_effects/four_path_effect_registry.csv
+trait_architecture/four_path_effects.py
+examples/audit_four_path_effects.py
 ```
 
-A D1 result can be called only `compatible_with_declared_scenario`,
-`contradicts_declared_scenario`, or `not_identified`. It is not proof of
-adaptation unless fitness or selection data are separately included.
+## Interpretation boundary
 
-## Boundary with eco-genetic-criticality
+Interaction records are not fitness effects, and trait associations are not
+automatically selection, defence efficacy, or adaptation. D1 identifies channel
+paths; D2/D3 can be reported only as:
 
-This repository asks:
+```text
+compatible_with_declared_scenario
+contradicts_declared_scenario
+not_identified
+```
 
-\[
-\text{biotic interaction regime} \to \text{trait architecture}.
-\]
-
-`eco-genetic-criticality` asks:
-
-\[
-\text{interaction feedback} \to \text{population/genetic persistence}.
-\]
-
-A future bridge may map trait architectures to demography and genetic
-persistence, but the two models remain separate until that bridge is explicitly
-defined.
+The project distinguishes floral modules from leaf resource quality and leaf
+resistance. Leaf traits or leaf antagonism do not enter the floral A×D result
+without an explicit cross-organ bridge.

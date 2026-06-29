@@ -1,14 +1,18 @@
 """Audit study cards for the Part I matched floral-regime route.
 
 The global trait/network route was deliberately retired after reproducible
-source-coverage tests. This module prevents the replacement literature route
-from degrading into an unstructured pile of papers: it classifies whether a
-study can contribute only a seed, a one-channel ledger, an aligned two-channel
-panel, or a direct Part I regime test.
+source-coverage tests. The matched-study route keeps studies as the unit of
+integration, but structural matching alone does not identify the Part I mixed
+partial. This module therefore distinguishes:
 
-No classification is a biological conclusion. In particular, ``D1`` means that
-the *data structure* is suitable for a declared observation model; it does not
-mean the study supports a particular theory scenario.
+* M0/M1/M2: discovery, one-channel, and aligned-panel evidence;
+* D1: all four directional interaction paths are estimable;
+* D2: the linked unit also has a reproductive-fitness surface;
+* D3: shared allocation cost is independently measured or calibrated.
+
+No classification is a biological conclusion. In particular, D2/D3 identify a
+*data structure suitable for a declared observation model*, not proof of
+adaptation or a universal trait covariance.
 """
 
 from __future__ import annotations
@@ -42,6 +46,13 @@ REQUIRED_COLUMNS = {
     "antagonist_denominator",
     "antagonist_same_context",
     "site_time_alignment",
+    "attraction_to_pollination_status",
+    "attraction_to_antagonist_status",
+    "barrier_to_antagonist_status",
+    "barrier_to_pollination_status",
+    "fitness_response",
+    "fitness_denominator",
+    "shared_cost_status",
     "raw_table_status",
     "trait_method_status",
     "phylogeny_or_population_structure_status",
@@ -55,6 +66,8 @@ LINKABLE_UNITS = frozenset({"individual", "plant_population", "patch", "network"
 RECOVERABLE_TABLES = frozenset({"supplement", "repository", "available", "author_provided"})
 READ_FULL_TEXT = frozenset({"read", "available"})
 SEPARATE_MODULES = frozenset({"independent", "separately_measured", "separate"})
+ESTIMATED_EFFECTS = frozenset({"estimated", "manipulated", "modelled", "direct"})
+SHARED_COST_IDENTIFIED = frozenset({"estimated", "allocation_measured", "calibrated"})
 
 
 @dataclass(frozen=True)
@@ -64,6 +77,8 @@ class MatchedStudySummary:
     high_information: bool
     score: int
     missing_for_d1: tuple[str, ...]
+    missing_for_d2: tuple[str, ...]
+    missing_for_d3: tuple[str, ...]
     warnings: tuple[str, ...]
 
 
@@ -88,7 +103,14 @@ def _tokens(value: object) -> tuple[str, ...]:
 
 
 def _has_value(value: object) -> bool:
-    return bool(_normalise(value)) and _normalise(value).lower() not in {"none", "na", "unknown", "not_recorded"}
+    return bool(_normalise(value)) and _normalise(value).lower() not in {
+        "none",
+        "na",
+        "unknown",
+        "not_recorded",
+        "not_estimated",
+        "not_observed",
+    }
 
 
 def _require_columns(rows: list[dict[str, str]]) -> None:
@@ -120,14 +142,16 @@ def _full_text_read(row: Mapping[str, str]) -> bool:
 
 
 def _modules_separated(row: Mapping[str, str]) -> bool:
-    """Return whether A_flower and B_flower were measured separately.
-
-    A composite such as floral exsertion relative to a protective bract may be
-    biologically important, but it cannot identify the Part I A × B relation by
-    itself because a change in the composite can arise from either module.
-    """
-
+    """Return whether A_flower and B_flower were measured separately."""
     return _normalise(row.get("module_separation_status")).lower() in SEPARATE_MODULES
+
+
+def _effect_estimated(row: Mapping[str, str], column: str) -> bool:
+    return _normalise(row.get(column)).lower() in ESTIMATED_EFFECTS
+
+
+def _shared_cost_identified(row: Mapping[str, str]) -> bool:
+    return _normalise(row.get("shared_cost_status")).lower() in SHARED_COST_IDENTIFIED
 
 
 def _channel_presence(row: Mapping[str, str]) -> tuple[bool, bool, bool, bool]:
@@ -138,7 +162,7 @@ def _channel_presence(row: Mapping[str, str]) -> tuple[bool, bool, bool, bool]:
     return attraction, barrier, pollination, antagonist
 
 
-def _d1_missing(row: Mapping[str, str]) -> list[str]:
+def _structural_missing(row: Mapping[str, str]) -> list[str]:
     attraction, barrier, pollination, antagonist = _channel_presence(row)
     missing: list[str] = []
     if not attraction:
@@ -166,7 +190,40 @@ def _d1_missing(row: Mapping[str, str]) -> list[str]:
     if not _has_value(row.get("trait_method_status")):
         missing.append("trait-method status")
     if not _table_recoverable(row):
-        missing.append("recoverable plant-level table")
+        missing.append("recoverable linked table")
+    return missing
+
+
+def _d1_missing(row: Mapping[str, str]) -> list[str]:
+    """Return gaps for the four-arrow channel-mechanism panel."""
+    missing = _structural_missing(row)
+    arrows = (
+        ("attraction_to_pollination_status", "A_flower → pollination effect"),
+        ("attraction_to_antagonist_status", "A_flower → floral-antagonist effect"),
+        ("barrier_to_antagonist_status", "B_flower → floral-antagonist effect"),
+        ("barrier_to_pollination_status", "B_flower → pollination effect"),
+    )
+    for column, label in arrows:
+        if not _effect_estimated(row, column):
+            missing.append(label)
+    return missing
+
+
+def _d2_missing(row: Mapping[str, str]) -> list[str]:
+    """Return gaps for an observed conditional A×B fitness surface."""
+    missing = _d1_missing(row)
+    if not _has_value(row.get("fitness_response")):
+        missing.append("total reproductive-fitness response")
+    if _has_value(row.get("fitness_response")) and not _has_value(row.get("fitness_denominator")):
+        missing.append("fitness denominator")
+    return missing
+
+
+def _d3_missing(row: Mapping[str, str]) -> list[str]:
+    """Return gaps for comparison with every term in the exact score expression."""
+    missing = _d2_missing(row)
+    if not _shared_cost_identified(row):
+        missing.append("shared A_flower × B_flower cost/allocation estimate")
     return missing
 
 
@@ -178,6 +235,7 @@ def _high_information(row: Mapping[str, str]) -> tuple[bool, int]:
         _has_value(row.get("site_id")),
         _has_value(row.get("pollination_denominator")),
         _has_value(row.get("antagonist_denominator")),
+        _has_value(row.get("fitness_response")),
         _linkable_unit(row),
         bool(_tokens(row.get("attraction_trait_ids"))) or bool(_tokens(row.get("barrier_trait_ids"))),
     )
@@ -186,8 +244,7 @@ def _high_information(row: Mapping[str, str]) -> tuple[bool, int]:
 
 
 def classify_matched_study_card(row: Mapping[str, str]) -> MatchedStudySummary:
-    """Classify a pre-screened study card without inferring any ecological sign."""
-
+    """Classify a pre-screened study card without inferring an ecological sign."""
     source_id = _normalise(row.get("source_id")) or "<missing source_id>"
     warnings: list[str] = []
     if not _full_text_read(row):
@@ -198,9 +255,13 @@ def classify_matched_study_card(row: Mapping[str, str]) -> MatchedStudySummary:
         warnings.append("No declared sampling period.")
     if _has_value(row.get("module_separation_status")) and not _modules_separated(row):
         warnings.append("Attraction and barrier measures are not independent; do not use their composite as an A_flower × B_flower test.")
+    if _has_value(row.get("fitness_response")) and not _has_value(row.get("fitness_denominator")):
+        warnings.append("Fitness response lacks an at-risk denominator or exposure definition.")
 
     attraction, barrier, pollination, antagonist = _channel_presence(row)
     d1_missing = _d1_missing(row)
+    d2_missing = _d2_missing(row)
+    d3_missing = _d3_missing(row)
     high_information, score = _high_information(row)
 
     if not _full_text_read(row):
@@ -215,8 +276,12 @@ def classify_matched_study_card(row: Mapping[str, str]) -> MatchedStudySummary:
         )
         if not aligned:
             level = "M1_channels_not_aligned"
+        elif not d3_missing:
+            level = "D3_parameterized_score_candidate"
+        elif not d2_missing:
+            level = "D2_observed_fitness_surface_candidate"
         elif not d1_missing:
-            level = "D1_direct_regime_model_candidate"
+            level = "D1_channel_mechanism_candidate"
         else:
             level = "M2_aligned_two_channel_panel"
     elif (attraction or barrier) and (pollination or antagonist):
@@ -230,6 +295,8 @@ def classify_matched_study_card(row: Mapping[str, str]) -> MatchedStudySummary:
         high_information=high_information,
         score=score,
         missing_for_d1=tuple(d1_missing),
+        missing_for_d2=tuple(d2_missing),
+        missing_for_d3=tuple(d3_missing),
         warnings=tuple(warnings),
     )
 
