@@ -74,6 +74,21 @@ empirical/functional_traits/literature_seed_registry.csv
 docs/functional_trait_model_scope.md
 ```
 
+## Trait receipt and coverage gate
+
+A provider request, a downloaded export, and a model-ready trait table are kept
+separate. Trait-specific coverage is audited against the requested Web of Life
+plant set before modelling. Direct records and imputed values are reported
+separately; only direct records count toward primary-analysis readiness.
+
+```text
+empirical/functional_traits/TRY_REQUEST_SCOPE.md
+empirical/functional_traits/TRAIT_RECEIPT_CONTRACT.md
+empirical/functional_traits/trait_receipt_template.csv
+empirical/functional_traits/trait_source_registry_template.csv
+examples/audit_trait_receipt_coverage.py
+```
+
 ## Future cases, outside the present backbone
 
 Campanula, Cirsium, and Megachile remain possible future mechanistic cases. They
