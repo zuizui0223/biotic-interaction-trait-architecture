@@ -16,14 +16,13 @@ import zipfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Callable, Iterable
-from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from .dryad_table_schema import MAX_HEADER_BYTES, _candidate_keys, _header_from_bytes
 from .title_validated_dryad_manifest import DryadManifestReceipt, probe_targets
 
 
-USER_AGENT = "biotic-interaction-trait-architecture dryad-archive-schema/0.1"
+USER_AGENT = "biotic-interaction-trait-architecture dryad-archive-schema/0.2"
 MAX_ARCHIVE_BYTES = 100 * 1024 * 1024
 VERSION_URL_RE = re.compile(r"^https://datadryad\.org/api/v2/versions/(\d+)$")
 
@@ -141,6 +140,12 @@ def inspect_archive_receipt(
     return rows
 
 
+def _archive_group_key(receipt: DryadManifestReceipt) -> tuple[str, str, str]:
+    """Identify one physical archive even when its manifest has many file rows."""
+
+    return receipt.target_id, receipt.dataset_doi, _version_url(receipt)
+
+
 def inspect_targets(
     target_rows: Iterable[dict[str, str]],
     *,
@@ -149,14 +154,20 @@ def inspect_targets(
 ) -> tuple[list[DryadArchiveSchema], dict[str, object]]:
     kwargs = {"fetch_json": fetch_json} if fetch_json is not None else {}
     receipts, manifest_report = probe_targets(target_rows, **kwargs)
-    rows: list[DryadArchiveSchema] = []
+    representatives: dict[tuple[str, str, str], DryadManifestReceipt] = {}
     for receipt in receipts:
-        if receipt.manifest_status == "manifest_recovered":
-            rows.extend(inspect_archive_receipt(receipt, download_archive=download_archive))
+        if receipt.manifest_status != "manifest_recovered":
+            continue
+        representatives.setdefault(_archive_group_key(receipt), receipt)
+
+    rows: list[DryadArchiveSchema] = []
+    for receipt in representatives.values():
+        rows.extend(inspect_archive_receipt(receipt, download_archive=download_archive))
     labels = sorted({row.schema_status for row in rows})
     return rows, {
         "manifest": manifest_report,
         "archive_schema": {
+            "unique_archives": len(representatives),
             "row_count": len(rows),
             "counts_by_status": {label: sum(row.schema_status == label for row in rows) for label in labels},
             "warning": "Archive headers are a structural screen only; they do not establish trait role, linkage, denominator, causal status, or a four-path effect estimate.",
