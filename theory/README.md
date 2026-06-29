@@ -2,7 +2,9 @@
 
 ## Objective
 
-Map interaction regimes to qualitative trait architectures without pretending that the first model is an empirically calibrated evolutionary prediction.
+Map mutualist and antagonist regimes to qualitative attraction--defence trait
+architectures without pretending that the first model is an empirically
+calibrated evolutionary prediction.
 
 ## Minimal modules
 
@@ -13,39 +15,71 @@ attraction A
 defence/access D
   leaf toughness, LDMC, thickness, spines, sticky secretion,
   chemical deterrence, physical access barriers
-
-reproductive assurance R
-  autonomous selfing, delayed selfing, herkogamy, dichogamy,
-  floral longevity
 ```
+
+Reproductive assurance and plant-material-use modules remain possible future
+extensions, but they are outside the current active theory-plus-global-network
+backbone.
 
 ## Interaction regimes
 
 ```text
 P: pollinator service
 H: floral herbivore / florivore pressure
-L: leaf-cutter / leaf-consumer pressure
+L: leaf consumer pressure
 ```
 
-The initial simulator will sweep a low-dimensional parameter grid and classify strategies rather than simulate whole plant genomes.
+The simulator sweeps a low-dimensional parameter grid and classifies strategies
+rather than simulating whole plant genomes.
+
+## Exact local A--D condition
+
+For the implemented score, the mixed partial
+
+\[
+\frac{\partial^2 W}{\partial A\,\partial D}
+=
+H d_A e_F
+- P b_A c_D e^{-c_DD}(1-c_RR)
+- c_{AD}
+\]
+
+separates local complementarity from local substitution. It is exact for the
+current score, but it is not an empirical covariance prediction by itself. The
+implementation and the required bridge to global data are documented in
+`docs/theory_to_network_prediction_contract.md`.
 
 ## Strategy classes to detect
 
 ```text
-attraction withdrawal: A low, D variable, R high
-dual insurance:        A high, D variable, R high
-guarded attraction:    A high, D high, R high
-open attraction:       A high, D low,  R low/moderate
-defence-first:         A low,  D high, R variable
+open attraction:       A high, D low
+guarded attraction:    A high, D high
+defence-first:         A low,  D high
+mixed:                 no coarse corner label
 ```
 
-## First falsifiable predictions
+## Falsifiable model-family predictions
 
-1. Attraction and defence covary negatively only when defence directly reduces pollinator access or shares a binding allocation budget with attraction.
-2. Attraction and defence covary positively when antagonists track attractive displays and defence selectively reduces antagonist cost.
-3. Pollinator decline does not uniquely imply attraction loss; the response depends on assurance efficiency and the outcrossing benefit retained by attraction.
-4. Leaf-cutter pressure affects leaf-related defence/access traits directly, but can indirectly alter floral strategy only through shared costs, shared architecture, or correlated trait modules.
+1. Attraction and defence are locally substitutable when defence directly
+   reduces pollinator access or shares a binding allocation budget with
+   attraction.
+2. Attraction and defence are locally complementary when floral antagonists
+   track attractive displays and defence selectively reduces their damage.
+3. A positive or negative covariance among simulated optima is a separate,
+   grid-dependent result; stability must be assessed over declared parameter
+   scenarios.
+4. Leaf-consumer pressure affects defence directly, but it changes the A--D
+   relation only through shared costs, shared architecture, or the distribution
+   of regimes in the current model.
 
-## Link to empirical chapters
+## Link to global analysis
 
-The Megachile chapter tests the leaf-resource side first. Campanula and Cirsium chapters test floral attraction, assurance, and floral defence. Empirical data may falsify a regime prediction, but do not retroactively validate the entire model class.
+The global-network layer tests observational signatures, not the score directly:
+
+```text
+A <-> pollination-network structure
+D <-> organ-matched antagonist-network structure
+```
+
+A direct A--D test is deferred until a matched dual-layer dataset provides both
+interaction contexts for comparable plants, sites, and times.
