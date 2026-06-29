@@ -1,4 +1,7 @@
-from trait_architecture.dryad_table_schema import inspect_manifest_tables
+from trait_architecture.dryad_table_schema import (
+    _public_file_stream_url,
+    inspect_manifest_tables,
+)
 from trait_architecture.title_validated_dryad_manifest import DryadManifestReceipt
 
 
@@ -56,3 +59,10 @@ def test_tsv_header_is_detected_and_table_access_failure_is_recorded() -> None:
     assert schemas[1].schema_status == "table_access_failed"
     assert "TimeoutError" in schemas[1].notes
     assert report["table_access_failed"] == 1
+
+
+def test_dryad_api_download_route_maps_to_public_file_stream() -> None:
+    assert _public_file_stream_url("https://datadryad.org/api/v2/files/26621/download") == (
+        "https://datadryad.org/stash/downloads/file_stream/26621"
+    )
+    assert _public_file_stream_url("https://example.org/file.csv") == ""
