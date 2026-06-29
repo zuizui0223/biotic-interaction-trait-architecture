@@ -17,9 +17,11 @@ defence/access D
   chemical deterrence, physical access barriers
 ```
 
-Reproductive assurance and plant-material-use modules remain possible future
-extensions, but they are outside the current active theory-plus-global-network
-backbone.
+The current score also retains reproductive assurance `R` as a sensitivity term
+because assurance can dilute attraction-mediated outcross return. It is varied
+in theoretical sensitivity analyses, but no separate global-data `R` module is
+part of the active backbone. Plant-material-use modules remain possible future
+extensions.
 
 ## Interaction regimes
 
