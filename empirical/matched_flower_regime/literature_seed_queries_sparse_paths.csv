@@ -1,0 +1,3 @@
+query_id,seed_route,target_level,query_text,target_signal,screen_priority,notes
+B03,flower_barrier_antagonism,M1,"floral defense floral herbivory experimental",measured flower-specific barrier plus floral-antagonist response,highest,Retain only M0 candidates until full text establishes a flower-specific resistance trait and a floral-antagonist denominator.
+C03,individual_attraction_pollination,M1,"floral trait pollinator visitation individual plant dataset",individual attraction trait to individual pollination outcome with public-data route,highest,Retain only M0 candidates until full text establishes a direct individual trait predictor and compatible individual pollination outcome.

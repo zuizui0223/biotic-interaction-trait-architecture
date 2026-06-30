@@ -111,6 +111,70 @@ def test_datacite_linked_dryad_doi_is_requeried_before_manifest_receipt() -> Non
     assert dryad[0].file_name == "individual_panel.csv"
 
 
+def test_zenodo_manifest_requires_an_eligible_source_relation() -> None:
+    def fetch(url: str):
+        if "zenodo.org" in url:
+            return 200, {
+                "hits": {
+                    "hits": [
+                        {
+                            "id": "citation-only",
+                            "metadata": {
+                                "doi": "10.5281/zenodo.citation-only",
+                                "related_identifiers": [
+                                    {"identifier": "10.1002/ajb2.1182", "relation": "isCitedBy"}
+                                ],
+                            },
+                            "files": [
+                                {"key": "article.pdf", "links": {"self": "https://zenodo.org/files/article.pdf"}}
+                            ],
+                        }
+                    ]
+                }
+            }
+        return empty_response(url)
+
+    receipts, _ = resolve_queue([row()], fetch_json=fetch)
+
+    zenodo = [receipt for receipt in receipts if receipt.repository == "Zenodo"]
+    assert len(zenodo) == 1
+    assert zenodo[0].resolution_status == "not_found"
+    assert "eligible supplement/derivation/part relation" in zenodo[0].notes
+
+
+def test_zenodo_manifest_accepts_derived_package_relation() -> None:
+    def fetch(url: str):
+        if "zenodo.org" in url:
+            return 200, {
+                "hits": {
+                    "hits": [
+                        {
+                            "id": "derived-package",
+                            "metadata": {
+                                "doi": "10.5281/zenodo.derived-package",
+                                "related_identifiers": [
+                                    {"identifier": "https://doi.org/10.1002/ajb2.1182", "relation": "isDerivedFrom"}
+                                ],
+                            },
+                            "files": [
+                                {"key": "individual_panel.csv", "links": {"self": "https://zenodo.org/files/individual_panel.csv"}}
+                            ],
+                        }
+                    ]
+                }
+            }
+        return empty_response(url)
+
+    receipts, report = resolve_queue([row()], fetch_json=fetch)
+
+    zenodo = [receipt for receipt in receipts if receipt.repository == "Zenodo"]
+    assert len(zenodo) == 1
+    assert zenodo[0].resolution_status == "manifest_recovered"
+    assert zenodo[0].file_name == "individual_panel.csv"
+    assert "Eligible Zenodo source relation" in zenodo[0].notes
+    assert report["counts_by_resolution_status"]["manifest_recovered"] == 1
+
+
 def test_endpoint_failure_is_recorded_without_blocking_other_routes() -> None:
     def fetch(url: str):
         if "datadryad.org" in url:

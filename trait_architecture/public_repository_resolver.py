@@ -23,6 +23,10 @@ from urllib.request import Request, urlopen
 USER_AGENT = "biotic-interaction-trait-architecture public-repository-resolver/0.2"
 REQUIRED_QUEUE_COLUMNS = {"queue_id", "study_id", "citation_or_doi", "queue_status"}
 ELIGIBLE_QUEUE_STATUSES = frozenset({"queued", "needs_repository_resolution"})
+# A DOI mention is insufficient: a repository record may merely cite the paper.
+# These relations identify a package as supplementary to, derived from, or part
+# of the focal study under the project provenance contract.
+ELIGIBLE_SOURCE_RELATIONS = frozenset({"issupplementto", "isderivedfrom", "ispartof"})
 
 
 @dataclass(frozen=True)
@@ -102,6 +106,34 @@ def _payload_contains_doi(payload: Any, doi: str) -> bool:
     if not normalized:
         return False
     return normalized in json.dumps(payload, sort_keys=True).lower()
+
+
+def _normalise_relation(value: object) -> str:
+    return _text(value).replace("_", "").replace("-", "").lower()
+
+
+def _has_eligible_source_relation(related_identifiers: object, study_doi: str) -> bool:
+    """Require an explicit supplement/derivation/part relation to the study.
+
+    Zenodo search may return objects that merely cite the focal DOI. Such records
+    must not enter the source route as an article-linked file manifest.
+    """
+
+    study_doi = _normalise_doi(study_doi)
+    if not study_doi or not isinstance(related_identifiers, list):
+        return False
+    for related in related_identifiers:
+        if not isinstance(related, dict):
+            continue
+        identifier = _normalise_doi(_text(
+            related.get("identifier")
+            or related.get("relatedIdentifier")
+            or related.get("related_identifier")
+        ))
+        relation = _normalise_relation(related.get("relation") or related.get("relationType"))
+        if identifier == study_doi and relation in ELIGIBLE_SOURCE_RELATIONS:
+            return True
+    return False
 
 
 def _dryad_file_receipts(
@@ -206,7 +238,7 @@ def _datacite_receipts(row: dict[str, str], request_url: str, payload: Any) -> l
 
 
 def _zenodo_receipts(row: dict[str, str], request_url: str, payload: Any) -> list[RepositoryReceipt]:
-    """Extract Zenodo record and file manifest if an exact study DOI is linked."""
+    """Extract Zenodo manifests only for an eligible source relation to the study."""
 
     hits = payload.get("hits") if isinstance(payload, dict) else None
     records = hits.get("hits") if isinstance(hits, dict) else None
@@ -218,8 +250,7 @@ def _zenodo_receipts(row: dict[str, str], request_url: str, payload: Any) -> lis
         if not isinstance(record, dict):
             continue
         metadata = record.get("metadata") if isinstance(record.get("metadata"), dict) else {}
-        related = json.dumps(metadata.get("related_identifiers", []), sort_keys=True).lower()
-        if study_doi and study_doi not in related:
+        if not _has_eligible_source_relation(metadata.get("related_identifiers"), study_doi):
             continue
         record_id = _text(record.get("id"))
         landing = _as_url(record.get("links", {}).get("html")) if isinstance(record.get("links"), dict) else ""
@@ -237,7 +268,7 @@ def _zenodo_receipts(row: dict[str, str], request_url: str, payload: Any) -> lis
                         repository="Zenodo", resolution_status="manifest_recovered", request_url=request_url,
                         dataset_identifier=record_id, dataset_doi=_normalise_doi(_text(metadata.get("doi"))),
                         landing_page_url=landing, file_name=name, file_url=download,
-                        notes="Machine-readable Zenodo file metadata recovered; table contents remain uninspected.",
+                        notes="Eligible Zenodo source relation and machine-readable file metadata recovered; table contents remain uninspected.",
                     ))
         elif record_id or landing:
             receipts.append(RepositoryReceipt(
@@ -245,7 +276,7 @@ def _zenodo_receipts(row: dict[str, str], request_url: str, payload: Any) -> lis
                 repository="Zenodo", resolution_status="landing_page_only", request_url=request_url,
                 dataset_identifier=record_id, dataset_doi=_normalise_doi(_text(metadata.get("doi"))),
                 landing_page_url=landing, file_name="", file_url="",
-                notes="Zenodo record related to study DOI; file manifest unavailable in this response.",
+                notes="Eligible Zenodo source relation recovered, but file manifest was unavailable in this response.",
             ))
     return receipts
 
@@ -338,7 +369,7 @@ def resolve_row(
         if status >= 400:
             raise RuntimeError(f"HTTP {status}")
         found = _zenodo_receipts(row, zenodo_url, payload)
-        receipts.extend(found or [_not_found_receipt(row, "Zenodo", zenodo_url, "Endpoint responded, but no study-linked repository object was recovered.")])
+        receipts.extend(found or [_not_found_receipt(row, "Zenodo", zenodo_url, "Endpoint responded, but no Zenodo record with an eligible supplement/derivation/part relation was recovered.")])
     except Exception as error:
         receipts.append(_error_receipt(row, "Zenodo", zenodo_url, error))
 
