@@ -50,7 +50,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "limit=${{ github.event.inputs.limit }}" >> "$GITHUB_OUTPUT"
           else
-            echo "limit=25" >> "$GITHUB_OUTPUT"
+            echo "limit=10" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run broad shallow public-source scout
