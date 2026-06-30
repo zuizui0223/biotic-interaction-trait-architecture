@@ -16,18 +16,22 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable
 
-from scripts.harvest_openalex_matched_flower_seeds import (
-    CSV_FIELDNAMES as OPENALEX_FIELDS,
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.harvest_openalex_matched_flower_seeds import (  # noqa: E402
     harvest,
     rank_key,
     read_query_registry,
     write_csv,
 )
-from trait_architecture.public_article_source_scout import audit_study_sources
+from trait_architecture.public_article_source_scout import audit_study_sources  # noqa: E402
 
 
 SCOUT_STATUS_ORDER = {
@@ -146,6 +150,19 @@ def build_row(candidate, receipts_report: dict[str, object]) -> BulkScoutRow:
     return BulkScoutRow(**{**asdict(rough), "broad_screen_priority": priority, "next_action": _next_action(rough)})
 
 
+def build_error_row(candidate, error: Exception) -> tuple[BulkScoutRow, dict[str, object]]:
+    report = {
+        "candidate_id": candidate.candidate_id,
+        "title": candidate.title,
+        "publication_year": candidate.publication_year,
+        "study_doi": candidate.doi,
+        "receipt_count": 1,
+        "counts_by_status": {"access_failed": 1},
+        "error": f"{type(error).__name__}: {error}",
+    }
+    return build_row(candidate, report), report
+
+
 def write_rows(path: Path, rows: Iterable[BulkScoutRow]) -> None:
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=BULK_FIELDS)
@@ -174,21 +191,25 @@ def main(argv: list[str] | None = None) -> int:
     scout_rows: list[BulkScoutRow] = []
     reports: list[dict[str, object]] = []
     for index, candidate in enumerate(doi_candidates, start=1):
-        receipts, report = audit_study_sources(
-            study_doi=candidate.doi,
-            queue_id=f"bulk_{index:04d}",
-            study_id=candidate.candidate_id.replace(":", "_"),
-        )
-        # Keep only aggregate report plus receipt statuses; do not persist table text or raw PDFs.
-        report = {
-            **report,
-            "candidate_id": candidate.candidate_id,
-            "title": candidate.title,
-            "publication_year": candidate.publication_year,
-            "metadata_match_score": candidate.metadata_match_score,
-        }
-        reports.append(report)
-        scout_rows.append(build_row(candidate, report))
+        try:
+            _receipts, report = audit_study_sources(
+                study_doi=candidate.doi,
+                queue_id=f"bulk_{index:04d}",
+                study_id=candidate.candidate_id.replace(":", "_"),
+            )
+            report = {
+                **report,
+                "candidate_id": candidate.candidate_id,
+                "title": candidate.title,
+                "publication_year": candidate.publication_year,
+                "metadata_match_score": candidate.metadata_match_score,
+            }
+            scout_rows.append(build_row(candidate, report))
+            reports.append(report)
+        except Exception as error:
+            row, report = build_error_row(candidate, error)
+            scout_rows.append(row)
+            reports.append(report)
 
     scout_rows = sorted(
         scout_rows,
@@ -210,6 +231,7 @@ def main(argv: list[str] | None = None) -> int:
         "manual_screen_medium": sum(row.broad_screen_priority == "manual_screen_medium" for row in scout_rows),
         "source_route_followup": sum(row.broad_screen_priority == "source_route_followup" for row in scout_rows),
         "hold_metadata_only": sum(row.broad_screen_priority == "hold_metadata_only" for row in scout_rows),
+        "access_failed_rows": sum(row.access_failed_count > 0 for row in scout_rows),
         "status": "success" if scout_rows else "no_doi_candidates",
         "warning": "A public source route is not an effect. Manual screening must still verify trait function, denominators, site-time alignment, and uncertainty.",
     }
