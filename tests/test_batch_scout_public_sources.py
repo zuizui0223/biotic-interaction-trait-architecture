@@ -1,7 +1,7 @@
 import csv
 from pathlib import Path
 
-from scripts.batch_scout_public_sources import run
+from trait_architecture.batch_public_source_scout import run
 
 
 def write_candidates(path: Path) -> None:
@@ -58,7 +58,7 @@ def test_batch_scout_preserves_m0_and_ranks_public_leads(monkeypatch, tmp_path: 
             ))
         return receipts, {}
 
-    monkeypatch.setattr("scripts.batch_scout_public_sources.audit_study_sources", fake_audit)
+    monkeypatch.setattr("trait_architecture.batch_public_source_scout.audit_study_sources", fake_audit)
     report = run(input_csv, out_dir, limit=0, sleep_seconds=0)
 
     assert report["screened_count"] == 2
