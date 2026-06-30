@@ -1,0 +1,31 @@
+name: Inspect Impatiens Dryad dataset structure
+
+on:
+  pull_request:
+    paths:
+      - "scripts/inspect_dryad_dataset_payload.py"
+      - ".github/workflows/inspect-impatiens-dryad-structure.yml"
+  workflow_dispatch:
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Inspect exact title-validated Dryad dataset endpoint
+        run: |
+          python scripts/inspect_dryad_dataset_payload.py \
+            10.5061/dryad.0j96d17 \
+            artifacts/impatiens_dryad_endpoint
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: impatiens-dryad-endpoint-structure
+          path: artifacts/impatiens_dryad_endpoint/
+          if-no-files-found: error

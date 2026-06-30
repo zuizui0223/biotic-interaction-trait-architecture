@@ -1,0 +1,46 @@
+name: Resolve public repository receipts
+
+on:
+  pull_request:
+    paths:
+      - "trait_architecture/public_repository_resolver.py"
+      - "scripts/resolve_public_repository_receipts.py"
+      - "empirical/four_path_effects/four_path_screen_queue.csv"
+      - ".github/workflows/resolve-public-repository-receipts.yml"
+  workflow_dispatch:
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Resolve public repository receipts
+        run: |
+          mkdir -p artifacts/public_repository_receipts
+          set +e
+          python scripts/resolve_public_repository_receipts.py \
+            empirical/four_path_effects/four_path_screen_queue.csv \
+            artifacts/public_repository_receipts \
+            > artifacts/public_repository_receipts/resolver_stdout.log \
+            2> artifacts/public_repository_receipts/resolver_stderr.log
+          status=$?
+          echo "$status" > artifacts/public_repository_receipts/resolver_exit_status.txt
+          cat artifacts/public_repository_receipts/resolver_stdout.log
+          cat artifacts/public_repository_receipts/resolver_stderr.log >&2
+          exit "$status"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-repository-receipts
+          path: artifacts/public_repository_receipts/
+          if-no-files-found: warn

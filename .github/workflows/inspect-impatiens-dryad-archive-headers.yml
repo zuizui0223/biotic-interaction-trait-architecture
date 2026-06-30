@@ -1,0 +1,106 @@
+name: Inspect Impatiens Dryad archive headers
+
+on:
+  pull_request:
+    paths:
+      - "trait_architecture/dryad_archive_schema.py"
+      - "trait_architecture/impatiens_models.py"
+      - "trait_architecture/standardized_ols.py"
+      - "scripts/inspect_title_validated_dryad_archive_headers.py"
+      - "scripts/screen_title_validated_dryad_documentation.py"
+      - "scripts/audit_impatiens_four_path_data.py"
+      - "scripts/extract_impatiens_variable_dictionary.py"
+      - "scripts/run_impatiens_four_path_models.py"
+      - "configs/impatiens_capensis_four_path_models.json"
+      - "empirical/four_path_effects/title_validated_dataset_targets.csv"
+      - ".github/workflows/inspect-impatiens-dryad-archive-headers.yml"
+  workflow_dispatch:
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Inspect CSV headers from version archive only
+        run: |
+          python scripts/inspect_title_validated_dryad_archive_headers.py \
+            empirical/four_path_effects/title_validated_dataset_targets.csv \
+            artifacts/impatiens_dryad_archive_headers
+
+      - name: Screen README/R documentation for linkage metadata
+        run: |
+          python scripts/screen_title_validated_dryad_documentation.py \
+            empirical/four_path_effects/title_validated_dataset_targets.csv \
+            artifacts/impatiens_dryad_documentation
+
+      - name: Audit four-path variable availability before fitting
+        run: |
+          python scripts/audit_impatiens_four_path_data.py \
+            empirical/four_path_effects/title_validated_dataset_targets.csv \
+            artifacts/impatiens_four_path_preanalysis
+
+      - name: Extract exact definitions for predeclared variables
+        run: |
+          python scripts/extract_impatiens_variable_dictionary.py \
+            empirical/four_path_effects/title_validated_dataset_targets.csv \
+            artifacts/impatiens_variable_dictionary
+
+      - name: Run predeclared four-path and fitness-component models
+        run: |
+          mkdir -p artifacts/impatiens_four_path_models
+          set +e
+          python scripts/run_impatiens_four_path_models.py \
+            configs/impatiens_capensis_four_path_models.json \
+            empirical/four_path_effects/title_validated_dataset_targets.csv \
+            artifacts/impatiens_four_path_models \
+            > artifacts/impatiens_four_path_models/model_stdout.log \
+            2> artifacts/impatiens_four_path_models/model_stderr.log
+          status=$?
+          echo "$status" > artifacts/impatiens_four_path_models/model_exit_status.txt
+          cat artifacts/impatiens_four_path_models/model_stdout.log
+          cat artifacts/impatiens_four_path_models/model_stderr.log >&2
+          exit "$status"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: impatiens-dryad-archive-headers
+          path: artifacts/impatiens_dryad_archive_headers/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: impatiens-dryad-documentation-screen
+          path: artifacts/impatiens_dryad_documentation/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: impatiens-four-path-preanalysis
+          path: artifacts/impatiens_four_path_preanalysis/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: impatiens-variable-definition-dictionary
+          path: artifacts/impatiens_variable_dictionary/
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: impatiens-four-path-models
+          path: artifacts/impatiens_four_path_models/
+          if-no-files-found: warn

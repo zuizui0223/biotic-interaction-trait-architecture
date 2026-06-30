@@ -1,0 +1,36 @@
+name: Validate public dataset links
+
+on:
+  pull_request:
+    paths:
+      - "trait_architecture/public_dataset_link_validation.py"
+      - "scripts/validate_public_dataset_links.py"
+      - "empirical/four_path_effects/public_dataset_link_candidates.csv"
+      - ".github/workflows/validate-public-dataset-links.yml"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Validate candidate dataset links
+        run: |
+          python scripts/validate_public_dataset_links.py \
+            empirical/four_path_effects/public_dataset_link_candidates.csv \
+            artifacts/public_dataset_link_validation
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: public-dataset-link-validation
+          path: artifacts/public_dataset_link_validation/
+          if-no-files-found: error
