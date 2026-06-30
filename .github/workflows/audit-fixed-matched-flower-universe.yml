@@ -1,0 +1,44 @@
+name: Audit fixed matched-flower candidate universe
+
+on:
+  pull_request:
+    paths:
+      - "trait_architecture/fixed_candidate_universe.py"
+      - "trait_architecture/candidate_universe_public_audit.py"
+      - "scripts/audit_fixed_matched_flower_universe.py"
+      - "tests/test_fixed_candidate_universe.py"
+      - "tests/test_candidate_universe_public_audit.py"
+      - ".github/workflows/audit-fixed-matched-flower-universe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Audit all fixed M0 candidates without reading article tables
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python scripts/audit_fixed_matched_flower_universe.py \
+            artifacts/fixed_258_public_routes \
+            --workers 8
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fixed-258-public-route-audit
+          path: artifacts/fixed_258_public_routes/
+          if-no-files-found: error
