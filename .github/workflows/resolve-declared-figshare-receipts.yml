@@ -4,8 +4,11 @@ on:
   pull_request:
     paths:
       - "trait_architecture/declared_figshare_receipts.py"
+      - "trait_architecture/declared_figshare_xlsx_headers.py"
       - "scripts/resolve_declared_figshare_receipts.py"
+      - "scripts/audit_declared_figshare_xlsx_headers.py"
       - "tests/test_declared_figshare_receipts.py"
+      - "tests/test_declared_figshare_xlsx_headers.py"
       - "empirical/matched_flower_regime/declared_figshare_source_queue.csv"
       - ".github/workflows/resolve-declared-figshare-receipts.yml"
   workflow_dispatch:
@@ -28,6 +31,13 @@ jobs:
         run: |
           python scripts/resolve_declared_figshare_receipts.py \
             empirical/matched_flower_regime/declared_figshare_source_queue.csv \
+            artifacts/declared_figshare_receipts
+
+      - name: Audit Gymnadenia workbook headers only
+        run: |
+          python scripts/audit_declared_figshare_xlsx_headers.py \
+            7314731 \
+            Kellenberger_etal_overdominance_small_datasets.xlsx \
             artifacts/declared_figshare_receipts
 
       - uses: actions/upload-artifact@v4
