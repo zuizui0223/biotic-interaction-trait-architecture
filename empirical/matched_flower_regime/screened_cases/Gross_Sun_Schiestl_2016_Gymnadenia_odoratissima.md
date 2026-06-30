@@ -69,13 +69,40 @@ measured**. The herbivory variable is the number of eaten flowers per
 inflorescence. Thus the individual link and available flower-count denominator
 are aligned at the field-observation level.
 
-## What this can support next
+## Registered A→floral-antagonism effect
 
-A predeclared observational `A_to_antagonism` model is now possible for a floral
-attraction candidate such as standardized log total-scent amount, using eaten
-flowers out of total flowers as the floral-antagonism outcome and controlling
-for population and year. This must be reported as a conditional observational
-association, not causal floral-scent defence or adaptation.
+One model was declared before inspecting the estimate:
+
+```text
+trait:       total floral scent amount, log1p then standardized
+outcome:     eaten flowers out of total flowers per inflorescence
+model:       binomial logit, population × year fixed intercepts
+uncertainty: conservative quasi-binomial SE
+causal role: observational association only
+```
+
+```text
+complete linked individuals: 1,162
+population-year strata:       13
+log odds ratio per 1 SD scent: +0.568
+95% CI:                        +0.042 to +1.094
+two-sided p-value:             0.034
+Pearson dispersion:            8.386
+```
+
+Thus, conditional on population × year, individuals with higher total floral
+scent had higher same-day odds of flowers being eaten. The record is retained as
+`A_to_antagonism` on its reported log-odds scale. The dispersion-adjusted
+standard error is deliberately conservative.
+
+## Interpretation boundary
+
+The positive association does **not** show that scent causally attracts
+antagonists, that scent is a defence trait, or that floral herbivory selected for
+or against scent. Trait and herbivory were measured on the same day, and the
+analysis is observational. The reported log odds ratio is kept
+`scale_specific_only`; it is not inserted directly into the Part I parameter
+envelope.
 
 The archive still does **not** supply an individual `A_to_pollination` effect,
 because observed pollinator measures are population-date outcomes. No
@@ -84,8 +111,7 @@ independently justified `B_flower` trait is present.
 ## Current classification
 
 ```text
-status:             high-information individual A-to-antagonism panel
-eligible next step:  predeclared observational A_to_antagonism extraction
+status:             M1 individual A-to-antagonism evidence
+registered effect:  Gross_Sun_Schiestl_2016_Gymnadenia_A_to_H_total_scent
 not established:     B_flower module, individual A_to_pollination, D1/D2/D3
-four-path registry:  no effect registered yet
 ```
