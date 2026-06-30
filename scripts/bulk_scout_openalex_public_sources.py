@@ -100,12 +100,12 @@ def _priority(row: BulkScoutRow) -> str:
     return "hold_metadata_only"
 
 
-def _next_action(row: BulkScoutRow) -> str:
-    if row.broad_screen_priority == "manual_screen_high":
+def _next_action(priority: str) -> str:
+    if priority == "manual_screen_high":
         return "Screen public full text or verified manifest for trait/outcome denominators and reported effects."
-    if row.broad_screen_priority == "manual_screen_medium":
+    if priority == "manual_screen_medium":
         return "Check whether missing channel signal is absent or only missed by metadata before effect extraction."
-    if row.broad_screen_priority == "source_route_followup":
+    if priority == "source_route_followup":
         return "Verify access route and identity before any table or trait-function screen."
     return "Do not manually read until public source route improves or all higher-priority candidates are exhausted."
 
@@ -147,7 +147,7 @@ def build_row(candidate, receipts_report: dict[str, object]) -> BulkScoutRow:
         next_action="pending",
     )
     priority = _priority(rough)
-    return BulkScoutRow(**{**asdict(rough), "broad_screen_priority": priority, "next_action": _next_action(rough)})
+    return BulkScoutRow(**{**asdict(rough), "broad_screen_priority": priority, "next_action": _next_action(priority)})
 
 
 def build_error_row(candidate, error: Exception) -> tuple[BulkScoutRow, dict[str, object]]:
