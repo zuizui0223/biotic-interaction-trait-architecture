@@ -4,8 +4,11 @@ on:
   pull_request:
     paths:
       - "trait_architecture/dalechampia_linked_panel.py"
+      - "trait_architecture/dalechampia_package_documentation.py"
       - "scripts/audit_dalechampia_linked_panel.py"
+      - "scripts/inspect_dalechampia_package_documentation.py"
       - "tests/test_dalechampia_linked_panel.py"
+      - "tests/test_dalechampia_package_documentation.py"
       - ".github/workflows/audit-dalechampia-linked-panel.yml"
   workflow_dispatch:
 
@@ -27,6 +30,12 @@ jobs:
         run: |
           python scripts/audit_dalechampia_linked_panel.py \
             10.1111/j.1600-0706.2013.20780.x \
+            10.5061/dryad.0k6djh9xx \
+            artifacts/dalechampia_linked_panel
+
+      - name: Inspect name-whitelisted package documentation
+        run: |
+          python scripts/inspect_dalechampia_package_documentation.py \
             10.5061/dryad.0k6djh9xx \
             artifacts/dalechampia_linked_panel
 
