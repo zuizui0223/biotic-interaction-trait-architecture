@@ -1,0 +1,35 @@
+name: Harvest sparse four-path candidates
+
+on:
+  pull_request:
+    paths:
+      - "scripts/harvest_openalex_matched_flower_seeds.py"
+      - "empirical/matched_flower_regime/literature_seed_queries_sparse_paths.csv"
+      - "empirical/matched_flower_regime/B_PATH_DISCOVERY_PROTOCOL.md"
+      - ".github/workflows/harvest-sparse-path-seeds.yml"
+  workflow_dispatch:
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Harvest targeted metadata candidates from OpenAlex
+        run: |
+          python scripts/harvest_openalex_matched_flower_seeds.py \
+            empirical/matched_flower_regime/literature_seed_queries_sparse_paths.csv \
+            artifacts/sparse_path_seed_harvest \
+            --results-per-query 50 \
+            --shortlist-per-route 20
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sparse-path-seed-harvest
+          path: artifacts/sparse_path_seed_harvest/
+          if-no-files-found: error
