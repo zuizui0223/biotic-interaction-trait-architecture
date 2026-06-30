@@ -1,0 +1,2 @@
+queue_id,study_id,citation_or_doi,plant_taxon,target_effect_roles,declared_figshare_article_id,queue_status,source_contract
+FS001,Kellenberger_et_al_2019_Gymnadenia_rhellicani,10.1038/s41467-018-07936-x,Gymnadenia_rhellicani,A_to_pollination,7314731,needs_repository_resolution,"The article Data Availability statement explicitly deposits all other generated and analysed datasets on Figshare accession 7314731. This declaration establishes only a public source route; effect extraction requires later trait, outcome, unit, denominator, and design screening."
