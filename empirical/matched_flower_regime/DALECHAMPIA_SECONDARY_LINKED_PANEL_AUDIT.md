@@ -36,10 +36,26 @@ strong evidence for a **candidate focal-blossom linkage structure** inside the
 later data package, but it remains a header-level conclusion until key semantics
 and row joins are documented for the package's own study context.
 
+## Documentation pass
+
+A bounded archive inspection searched only for explicit documentation filenames:
+`README`, `metadata`, `methods`, `documentation`, and `stash` variants. Among
+all 17 archived members, **none** matched this allow-list.
+
+```text
+documentation files recovered: 0
+observation-table rows retained: 0
+```
+
+Consequently, no in-package variable dictionary or methods note is publicly
+recoverable through this archive route. Header names alone cannot establish the
+biological role of bract, resin, pollen, or seed fields.
+
 ## What it does not establish
 
 ```text
 not established: the 2013 article's original raw-data provenance
+not established: the later package's study methods or variable dictionary
 not established: a separately measured floral B_flower resistance trait
 not established: a direct four-path effect estimate
 not established: D1, D2, or D3 status
