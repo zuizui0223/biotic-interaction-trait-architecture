@@ -33,13 +33,14 @@ from .public_repository_resolver import RepositoryReceipt, resolve_row
 
 
 USER_AGENT = "biotic-interaction-trait-architecture candidate-universe-audit/0.1"
+EMPIRICAL_WORK_TYPES = frozenset({"article", "preprint", "letter", "dissertation"})
 CANDIDATE_FIELDS = (
     "candidate_id", "title", "authors", "publication_year", "work_type", "doi",
     "seed_routes", "seed_query_ids", "is_open_access", "open_access_url",
     "metadata_match_score", "metadata_attraction_signal", "metadata_barrier_signal",
     "metadata_pollination_signal", "metadata_antagonist_signal", "metadata_recoverability_signal",
-    "doi_status", "snapshot_oa_route", "crossref_metadata_status",
-    "crossref_content_link_count", "crossref_pdf_link_count",
+    "metadata_signal_count", "triage_cohort", "doi_status", "snapshot_oa_route",
+    "crossref_metadata_status", "crossref_content_link_count", "crossref_pdf_link_count",
     "repository_manifest_candidate_count", "repository_landing_candidate_count",
     "repository_access_failed_count", "route_lane", "triage_score", "do_not_infer",
 )
@@ -100,6 +101,24 @@ def _signal_count(row: dict[str, str]) -> int:
         "metadata_pollination_signal", "metadata_antagonist_signal",
     )
     return sum(_bool(row.get(field)) for field in fields)
+
+
+def _triage_cohort(row: dict[str, str]) -> str:
+    """Separate high-information empirical leads from context/review material.
+
+    The cohort is a reading-order device only. It reflects study type plus the
+    original metadata signals; it is not an empirical evidence classification.
+    """
+
+    signal_count = _signal_count(row)
+    work_type = _text(row.get("work_type")).lower()
+    if work_type in EMPIRICAL_WORK_TYPES and signal_count >= 3:
+        return "high_information_empirical_candidate"
+    if work_type in EMPIRICAL_WORK_TYPES and signal_count >= 2:
+        return "empirical_candidate"
+    if work_type == "review":
+        return "review_or_synthesis_context"
+    return "context_or_low_information_candidate"
 
 
 def _article_receipt_row(candidate_id: str, receipt: ArticleSourceReceipt) -> dict[str, str]:
@@ -171,9 +190,13 @@ def _route_lane(row: dict[str, str], summary: CandidateRouteSummary | None) -> s
         return "no_doi_for_endpoint_audit"
     if summary is None:
         return "endpoint_audit_not_returned"
-    if summary.repository_manifest_candidate_count:
+    has_fulltext_candidate = bool(_text(row.get("open_access_url"))) or bool(summary.crossref_content_link_count)
+    has_manifest_candidate = bool(summary.repository_manifest_candidate_count)
+    if has_manifest_candidate and has_fulltext_candidate:
+        return "verify_public_fulltext_and_repository_identity"
+    if has_manifest_candidate:
         return "verify_repository_identity_first"
-    if _text(row.get("open_access_url")) or summary.crossref_content_link_count:
+    if has_fulltext_candidate:
         return "verify_public_fulltext_access"
     if summary.repository_landing_candidate_count:
         return "verify_repository_metadata_identity"
@@ -183,16 +206,23 @@ def _route_lane(row: dict[str, str], summary: CandidateRouteSummary | None) -> s
 def _triage_score(row: dict[str, str], summary: CandidateRouteSummary | None) -> int:
     if summary is None:
         return 0
-    # Accessibility/provenance leads dominate. Metadata signals are a tie-breaker,
-    # never a claim about biological evidence quality.
-    score = 0
-    score += 100 * summary.repository_manifest_candidate_count
-    score += 25 * int(bool(_text(row.get("open_access_url"))))
-    score += 10 * summary.crossref_pdf_link_count
-    score += 4 * summary.crossref_content_link_count
-    score += 2 * summary.repository_landing_candidate_count
-    score += int(_text(row.get("metadata_match_score")) or 0)
-    score += _signal_count(row)
+    # A broad repository search can yield an unrelated package. Therefore
+    # unverified repository hits add only a small route bonus; they must never
+    # outrank a high-information empirical candidate on their own.
+    cohort_base = {
+        "high_information_empirical_candidate": 1000,
+        "empirical_candidate": 100,
+        "review_or_synthesis_context": 10,
+        "context_or_low_information_candidate": 0,
+    }[_triage_cohort(row)]
+    score = cohort_base
+    score += 20 * _signal_count(row)
+    score += 3 * int(_text(row.get("metadata_match_score")) or 0)
+    score += 5 * int(bool(_text(row.get("open_access_url"))))
+    score += 3 * summary.crossref_pdf_link_count
+    score += summary.crossref_content_link_count
+    score += summary.repository_manifest_candidate_count
+    score += summary.repository_landing_candidate_count
     return score
 
 
@@ -215,6 +245,8 @@ def _candidate_row(row: dict[str, str], summary: CandidateRouteSummary | None) -
         "metadata_pollination_signal": str(_bool(row.get("metadata_pollination_signal"))),
         "metadata_antagonist_signal": str(_bool(row.get("metadata_antagonist_signal"))),
         "metadata_recoverability_signal": str(_bool(row.get("metadata_recoverability_signal"))),
+        "metadata_signal_count": str(_signal_count(row)),
+        "triage_cohort": _triage_cohort(row),
         "doi_status": "has_doi" if normalise_doi(row.get("doi", "")) else "missing_doi",
         "snapshot_oa_route": "candidate_present" if _text(row.get("open_access_url")) else "not_present",
         "crossref_metadata_status": summary.crossref_metadata_status if summary else "not_checked",
@@ -304,6 +336,7 @@ def write_audit(
         writer.writeheader()
         writer.writerows(source_receipts)
     lanes = sorted({row["route_lane"] for row in rows})
+    cohorts = sorted({row["triage_cohort"] for row in rows})
     report = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "scope": "fixed PR #20 M0 universe; shallow public source-route metadata only",
@@ -312,8 +345,12 @@ def write_audit(
         "doi_count": sum(row["doi_status"] == "has_doi" for row in rows),
         "receipt_count": len(source_receipts),
         "counts_by_route_lane": {lane: sum(row["route_lane"] == lane for row in rows) for lane in lanes},
+        "counts_by_triage_cohort": {cohort: sum(row["triage_cohort"] == cohort for row in rows) for cohort in cohorts},
         "top_manual_screen_candidates": [
-            {key: row[key] for key in ("candidate_id", "title", "doi", "route_lane", "triage_score", "metadata_match_score")}
+            {key: row[key] for key in (
+                "candidate_id", "title", "doi", "triage_cohort", "metadata_signal_count",
+                "route_lane", "triage_score", "metadata_match_score",
+            )}
             for row in rows[:75]
         ],
         "decision_boundary": (
