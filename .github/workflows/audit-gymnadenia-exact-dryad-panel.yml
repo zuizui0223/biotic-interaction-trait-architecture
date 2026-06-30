@@ -1,0 +1,39 @@
+name: Audit Gymnadenia exact Dryad panel
+
+on:
+  pull_request:
+    paths:
+      - "trait_architecture/exact_dryad_panel_audit.py"
+      - "trait_architecture/dalechampia_linked_panel.py"
+      - "scripts/audit_exact_dryad_panel.py"
+      - "tests/test_exact_dryad_panel_audit.py"
+      - ".github/workflows/audit-gymnadenia-exact-dryad-panel.yml"
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Audit exact article-linked Dryad package
+        run: |
+          python scripts/audit_exact_dryad_panel.py \
+            10.1371/journal.pone.0147975 \
+            10.5061/dryad.dj40r \
+            Gymnadenia_odoratissima \
+            artifacts/gymnadenia_exact_dryad_panel
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gymnadenia-exact-dryad-panel
+          path: artifacts/gymnadenia_exact_dryad_panel/
+          if-no-files-found: error
