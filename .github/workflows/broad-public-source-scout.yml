@@ -1,0 +1,59 @@
+name: Broad public source scout
+
+on:
+  pull_request:
+    paths:
+      - "scripts/harvest_openalex_matched_flower_seeds.py"
+      - "scripts/rank_broad_public_source_availability.py"
+      - "trait_architecture/broad_source_availability.py"
+      - "tests/test_broad_source_availability.py"
+      - "empirical/matched_flower_regime/literature_seed_queries.csv"
+      - ".github/workflows/broad-public-source-scout.yml"
+  workflow_dispatch:
+    inputs:
+      results_per_query:
+        description: "OpenAlex results per seed query"
+        required: true
+        default: "50"
+      manual_queue_size:
+        description: "Number of ranked candidates to keep in manual queue"
+        required: true
+        default: "40"
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Harvest broad OpenAlex candidates
+        run: |
+          python scripts/harvest_openalex_matched_flower_seeds.py \
+            empirical/matched_flower_regime/literature_seed_queries.csv \
+            artifacts/matched_flower_seed_harvest \
+            --results-per-query "${{ github.event.inputs.results_per_query || '50' }}" \
+            --shortlist-per-route 15
+
+      - name: Rank shallow public-source availability
+        run: |
+          python scripts/rank_broad_public_source_availability.py \
+            artifacts/matched_flower_seed_harvest/matched_flower_seed_candidates.csv \
+            artifacts/broad_public_source_availability \
+            --top-n "${{ github.event.inputs.manual_queue_size || '40' }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: broad-public-source-availability
+          path: artifacts/broad_public_source_availability/
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: matched-flower-seed-harvest
+          path: artifacts/matched_flower_seed_harvest/
+          if-no-files-found: error
