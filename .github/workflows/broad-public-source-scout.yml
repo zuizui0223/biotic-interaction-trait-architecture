@@ -50,6 +50,7 @@ jobs:
             artifacts/matched_flower_seed_harvest/openalex_matched_flower_all_candidates.csv \
             artifacts/broad_public_source_availability \
             --top-n "${{ github.event.inputs.manual_queue_size || '40' }}" \
+            --exclude-screened-queue empirical/four_path_effects/four_path_screen_queue.csv \
             > artifacts/broad_public_source_availability/rank_stdout.log \
             2> artifacts/broad_public_source_availability/rank_stderr.log
           status=$?
