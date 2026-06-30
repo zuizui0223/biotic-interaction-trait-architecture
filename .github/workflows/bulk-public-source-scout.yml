@@ -1,0 +1,44 @@
+name: Bulk public source scout
+
+on:
+  pull_request:
+    paths:
+      - "scripts/bulk_scout_openalex_public_sources.py"
+      - "scripts/harvest_openalex_matched_flower_seeds.py"
+      - "trait_architecture/public_article_source_scout.py"
+      - "trait_architecture/public_repository_resolver.py"
+      - "tests/test_bulk_public_source_scout.py"
+      - ".github/workflows/bulk-public-source-scout.yml"
+  workflow_dispatch:
+    inputs:
+      results_per_query:
+        description: "OpenAlex results per seed query"
+        required: true
+        default: "50"
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Bulk scout DOI candidates for source routes
+        run: |
+          python scripts/bulk_scout_openalex_public_sources.py \
+            empirical/matched_flower_regime/literature_seed_queries.csv \
+            artifacts/bulk_public_source_scout \
+            --results-per-query "${{ github.event.inputs.results_per_query || '50' }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bulk-public-source-scout
+          path: artifacts/bulk_public_source_scout/
+          if-no-files-found: error
