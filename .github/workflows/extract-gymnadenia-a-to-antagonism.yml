@@ -1,0 +1,39 @@
+name: Extract Gymnadenia A to antagonism effect
+
+on:
+  pull_request:
+    paths:
+      - "trait_architecture/gymnadenia_a_to_antagonism.py"
+      - "trait_architecture/gymnadenia_row_linkage.py"
+      - "trait_architecture/dalechampia_linked_panel.py"
+      - "scripts/extract_gymnadenia_a_to_antagonism.py"
+      - "tests/test_gymnadenia_a_to_antagonism.py"
+      - ".github/workflows/extract-gymnadenia-a-to-antagonism.yml"
+      - "empirical/four_path_effects/GYMNADENIA_A_TO_ANTAGONISM_PROTOCOL.md"
+  workflow_dispatch:
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Run predeclared observational extraction
+        run: |
+          python scripts/extract_gymnadenia_a_to_antagonism.py \
+            10.5061/dryad.dj40r \
+            artifacts/gymnadenia_a_to_antagonism
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gymnadenia-a-to-antagonism
+          path: artifacts/gymnadenia_a_to_antagonism/
+          if-no-files-found: error
