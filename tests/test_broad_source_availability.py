@@ -1,4 +1,11 @@
-from trait_architecture.broad_source_availability import rank_candidates, score_row
+from pathlib import Path
+
+from trait_architecture.broad_source_availability import (
+    filter_unscreened,
+    rank_candidates,
+    read_already_screened_dois,
+    score_row,
+)
 
 
 def row(**updates: str) -> dict[str, str]:
@@ -46,3 +53,18 @@ def test_ranking_prefers_accessible_sources_over_metadata_score_only() -> None:
     ])
 
     assert records[0].candidate_id == "openalex:oa"
+
+
+def test_final_screened_queue_rows_are_excluded_from_manual_ranking(tmp_path: Path) -> None:
+    queue = tmp_path / "queue.csv"
+    queue.write_text(
+        "queue_id,citation_or_doi,queue_status\n"
+        "Q1,https://doi.org/10.1/example,registered_D1_observational_panel\n"
+        "Q2,10.1/keep,queued\n",
+        encoding="utf-8",
+    )
+    excluded = read_already_screened_dois(queue)
+    rows = [row(candidate_id="drop", doi="https://doi.org/10.1/example"), row(candidate_id="keep", doi="10.1/keep")]
+
+    assert excluded == {"10.1/example"}
+    assert [item["candidate_id"] for item in filter_unscreened(rows, excluded)] == ["keep"]
