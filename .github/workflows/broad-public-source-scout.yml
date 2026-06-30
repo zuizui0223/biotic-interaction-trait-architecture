@@ -41,19 +41,30 @@ jobs:
 
       - name: Rank shallow public-source availability
         run: |
+          mkdir -p artifacts/broad_public_source_availability
+          set +e
           python scripts/rank_broad_public_source_availability.py \
             artifacts/matched_flower_seed_harvest/openalex_matched_flower_all_candidates.csv \
             artifacts/broad_public_source_availability \
-            --top-n "${{ github.event.inputs.manual_queue_size || '40' }}"
+            --top-n "${{ github.event.inputs.manual_queue_size || '40' }}" \
+            > artifacts/broad_public_source_availability/rank_stdout.log \
+            2> artifacts/broad_public_source_availability/rank_stderr.log
+          status=$?
+          echo "$status" > artifacts/broad_public_source_availability/rank_exit_status.txt
+          cat artifacts/broad_public_source_availability/rank_stdout.log
+          cat artifacts/broad_public_source_availability/rank_stderr.log >&2
+          exit "$status"
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: broad-public-source-availability
           path: artifacts/broad_public_source_availability/
-          if-no-files-found: error
+          if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: matched-flower-seed-harvest
           path: artifacts/matched_flower_seed_harvest/
-          if-no-files-found: error
+          if-no-files-found: warn
