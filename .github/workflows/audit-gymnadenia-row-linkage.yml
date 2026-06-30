@@ -1,0 +1,37 @@
+name: Audit Gymnadenia row linkage
+
+on:
+  pull_request:
+    paths:
+      - "trait_architecture/gymnadenia_row_linkage.py"
+      - "trait_architecture/dalechampia_linked_panel.py"
+      - "scripts/audit_gymnadenia_row_linkage.py"
+      - "tests/test_gymnadenia_row_linkage.py"
+      - ".github/workflows/audit-gymnadenia-row-linkage.yml"
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Audit individual row linkage without retaining observations
+        run: |
+          python scripts/audit_gymnadenia_row_linkage.py \
+            10.5061/dryad.dj40r \
+            artifacts/gymnadenia_row_linkage
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gymnadenia-row-linkage-audit
+          path: artifacts/gymnadenia_row_linkage/
+          if-no-files-found: error
