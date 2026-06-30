@@ -111,11 +111,20 @@ Part I robustness sweep. Raw coefficients are never inserted directly into the
 fitness score, and shared cost \(c_{AD}\) remains a sensitivity parameter until
 allocation/cost evidence exists.
 
+The current empirical stopping rules are explicit: no pooled role-specific
+synthesis occurs until a role × reported-scale × causal-status stratum contains
+at least two independent study clusters. The evidence atlas also records
+verified but currently unextractable public-source cases, so a source lead is
+not mistaken for a registered effect.
+
 Key files:
 
 ```text
 empirical/four_path_effects/FOUR_PATH_EFFECT_PROTOCOL.md
 empirical/four_path_effects/four_path_effect_registry.csv
+empirical/four_path_effects/INITIAL_EVIDENCE_MAP.md
+empirical/four_path_effects/EVIDENCE_STATUS_v0.csv
+empirical/four_path_effects/EVIDENCE_ATLAS_v0.md
 trait_architecture/four_path_effects.py
 examples/audit_four_path_effects.py
 ```
