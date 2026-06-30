@@ -5,10 +5,13 @@ on:
     paths:
       - "trait_architecture/declared_figshare_receipts.py"
       - "trait_architecture/declared_figshare_xlsx_headers.py"
+      - "trait_architecture/declared_figshare_image_manifest.py"
       - "scripts/resolve_declared_figshare_receipts.py"
       - "scripts/audit_declared_figshare_xlsx_headers.py"
+      - "scripts/audit_declared_figshare_image_manifests.py"
       - "tests/test_declared_figshare_receipts.py"
       - "tests/test_declared_figshare_xlsx_headers.py"
+      - "tests/test_declared_figshare_image_manifest.py"
       - "empirical/matched_flower_regime/declared_figshare_source_queue.csv"
       - ".github/workflows/resolve-declared-figshare-receipts.yml"
   workflow_dispatch:
@@ -39,6 +42,17 @@ jobs:
             7314731 \
             Kellenberger_etal_overdominance_small_datasets.xlsx \
             artifacts/declared_figshare_receipts
+
+      - name: Audit Gymnadenia pollinator archive manifests only
+        run: |
+          python scripts/audit_declared_figshare_image_manifests.py \
+            7314731 \
+            artifacts/declared_figshare_receipts \
+            Kellenberger_etal_overdominance_pollinator_recordings_2016_1.zip \
+            Kellenberger_etal_overdominance_pollinator_recordings_2016_2.zip \
+            Kellenberger_etal_overdominance_pollinator_recordings_2016_3.zip \
+            Kellenberger_etal_overdominance_pollinator_recordings_2017_1.zip \
+            Kellenberger_etal_overdominance_pollinator_recordings_2017_2.zip
 
       - uses: actions/upload-artifact@v4
         with:
