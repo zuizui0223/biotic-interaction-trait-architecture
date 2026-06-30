@@ -91,7 +91,7 @@ def test_predeclared_extractor_returns_one_aggregate_effect_without_rows() -> No
     effect = report["effect"]
     assert report["sample"]["included_rows"] == 12
     assert report["sample"]["population_year_strata"] == 2
-    assert report["analysis"]["effect_measure"] == "log_odds_ratio"
+    assert effect["effect_measure"] == "log_odds_ratio"
     assert effect["fit_converged"] is True
     assert math.isfinite(effect["effect_estimate"])
     assert effect["effect_ci_lower"] < effect["effect_ci_upper"]
