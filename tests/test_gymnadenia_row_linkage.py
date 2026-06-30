@@ -92,4 +92,4 @@ def test_row_linkage_audit_outputs_aggregate_counts_not_observations() -> None:
     assert contract["numeric_nonnegative_outcome_with_positive_denominator"] == 1
     assert contract["eaten_exceeds_linked_flower_count"] == 1
     assert "987.654" not in json.dumps(report)
-    assert "does not establish whether" in report["decision_boundary"]
+    assert "No observation rows or values are written." in report["decision_boundary"]
