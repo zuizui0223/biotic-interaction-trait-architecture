@@ -47,7 +47,7 @@ IDENTITY_FIELDS = (
 CANDIDATE_FIELDS = (
     "candidate_id", "title", "doi", "metadata_signal_count", "triage_cohort",
     "content_url_count", "public_pdf_prefix_count", "public_html_prefix_count",
-    "access_denied_count", "repository_candidate_count", "repository_identity_verified_count",
+    "access_denied_count", "repository_manifest_candidate_count", "repository_identity_verified_count",
     "next_lane", "do_not_infer",
 )
 
@@ -295,7 +295,7 @@ def _candidate_summary(row: dict[str, str], accesses: list[AccessReceipt], ident
         "public_pdf_prefix_count": str(pdf),
         "public_html_prefix_count": str(html),
         "access_denied_count": str(denied),
-        "repository_candidate_count": str(len(identities)),
+        "repository_manifest_candidate_count": str(len(identities)),
         "repository_identity_verified_count": str(verified),
         "next_lane": lane,
         "do_not_infer": "Access and record-relation checks only. Do not infer article table content, trait roles, denominators, linked units, effect values, or evidence level.",
@@ -319,7 +319,7 @@ def run_access_probe(
     repository = [
         receipt for receipt in source_receipts
         if receipt.get("source_kind") == "repository_metadata_candidate"
-        and receipt.get("resolution_status") in {"manifest_recovered", "landing_page_only"}
+        and receipt.get("resolution_status") == "manifest_recovered"
     ]
     jobs: list[tuple[dict[str, str], str, str]] = []
     for row in high:
@@ -356,7 +356,7 @@ def run_access_probe(
     lanes = sorted({row["next_lane"] for row in summary})
     report = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "scope": "high-information empirical content routes plus all repository-manifest/landing candidates from fixed 258-source audit",
+        "scope": "high-information empirical content routes plus manifest-bearing repository candidates from fixed 258-source audit",
         "high_information_candidate_count": len(high),
         "content_url_probe_count": len(access),
         "repository_identity_probe_count": len(identities),
