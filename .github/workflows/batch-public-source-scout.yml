@@ -5,6 +5,7 @@ on:
     paths:
       - "scripts/harvest_openalex_matched_flower_seeds.py"
       - "scripts/batch_scout_public_sources.py"
+      - "trait_architecture/batch_public_source_scout.py"
       - "trait_architecture/public_article_source_scout.py"
       - "empirical/matched_flower_regime/literature_seed_queries.csv"
       - "empirical/matched_flower_regime/BATCH_PUBLIC_SOURCE_SCOUT_PROTOCOL.md"
@@ -43,12 +44,21 @@ jobs:
             --results-per-query "${{ github.event.inputs.results_per_query || '50' }}" \
             --shortlist-per-route 15
 
+      - name: Resolve scout limit
+        id: resolve_limit
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "limit=${{ github.event.inputs.limit }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "limit=25" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Run broad shallow public-source scout
         run: |
           python scripts/batch_scout_public_sources.py \
             artifacts/matched_flower_seed_harvest/openalex_matched_flower_all_candidates.csv \
             artifacts/matched_flower_batch_public_sources \
-            --limit "${{ github.event.inputs.limit || '0' }}" \
+            --limit "${{ steps.resolve_limit.outputs.limit }}" \
             --sleep-seconds 0.05
 
       - uses: actions/upload-artifact@v4
