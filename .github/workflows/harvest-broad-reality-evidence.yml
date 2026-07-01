@@ -1,0 +1,51 @@
+name: Harvest broad reality evidence
+
+on:
+  pull_request:
+    paths:
+      - "trait_architecture/broad_reality_evidence.py"
+      - "trait_architecture/broad_reality_screen.py"
+      - "scripts/harvest_broad_reality_evidence.py"
+      - "scripts/screen_broad_reality_evidence.py"
+      - "tests/test_broad_reality_evidence.py"
+      - "tests/test_broad_reality_screen.py"
+      - "empirical/broad_reality_evidence/**"
+      - ".github/workflows/harvest-broad-reality-evidence.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Build high-recall Crossref evidence corpus
+        run: |
+          python scripts/harvest_broad_reality_evidence.py \
+            empirical/broad_reality_evidence/broad_evidence_query_registry.csv \
+            artifacts/broad_reality_evidence \
+            --rows-per-query 200
+
+      - name: Create metadata-only shallow-screen cohort
+        run: |
+          python scripts/screen_broad_reality_evidence.py \
+            artifacts/broad_reality_evidence/broad_reality_evidence_candidates.csv \
+            artifacts/broad_reality_evidence
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: broad-reality-evidence-corpus
+          path: artifacts/broad_reality_evidence/
+          if-no-files-found: warn

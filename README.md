@@ -18,8 +18,9 @@ The target is a conditional regime map, not a universal trait trade-off:
 
 ```text
 Part I   exact score condition → functional-form robustness map
-Part II  reproducible public-data feasibility decisions
-Part III four path-specific effect synthesis → parameter envelopes → empirical regime map
+Part II  broad real-world evidence corpus → support / contradiction / gap map
+Part III strict four-path records → high-quality quantitative anchors only
+Part IV  self-contained field panels → direct D1/D2 tests where public literature is incomplete
 ```
 
 ### Part I: robustness before calibration
@@ -43,6 +44,9 @@ conditional_majority
 mixed_or_sensitive
 ```
 
+Part I is the primary inferential engine. It must remain mathematically robust
+when broad empirical evidence is sparse, heterogeneous, or contradictory.
+
 Key files:
 
 ```text
@@ -52,19 +56,38 @@ trait_architecture/robustness.py
 scripts/run_part_i_robustness.py
 ```
 
-### Part II: do not force a global join
+### Part II: broad real-world evidence
 
-The initial global routes are not the active empirical backbone:
+The broad empirical route is deliberately high-recall. It does not require every
+paper to measure all four paths on the same biological unit.
 
 ```text
-Web of Life × BIEN leaf traits  → insufficient reproducible trait coverage
-GloBI antagonist claims         → no sampled-network/effort contract
-TRY custom export               → not an active reproducible dependency
+A_to_pollination  -> attraction/display traits with pollination outcomes
+A_to_antagonism   -> attraction/display traits with floral antagonism outcomes
+B_to_antagonism   -> flower-specific resistance/access traits with floral antagonism
+B_to_pollination  -> flower-specific resistance/access traits with pollination
+joint_channels    -> pollination and floral antagonism jointly considered
 ```
 
-These are feasibility findings, not negative evidence against Part I.
+It asks whether published systems provide directional support, contradiction, or
+silence for conditional Part I predictions. It produces a coverage map,
+direction map, design map, and only then small compatible effect-size
+meta-analyses within predeclared trait/outcome/design strata.
 
-### Part III-A: direct matched-study cases
+A study can be useful broad evidence even when it is not eligible for direct
+four-path calibration. Query membership and title/abstract signals are never
+mistaken for measured effects.
+
+Key files:
+
+```text
+empirical/broad_reality_evidence/BROAD_REALITY_EVIDENCE_PROTOCOL.md
+empirical/broad_reality_evidence/broad_evidence_query_registry.csv
+trait_architecture/broad_reality_evidence.py
+scripts/harvest_broad_reality_evidence.py
+```
+
+### Part III-A: strict matched-study anchors
 
 A direct case concerns local fitness curvature, not raw trait covariance. The
 four directional paths are:
@@ -85,6 +108,10 @@ D2  D1 plus linked reproductive-fitness surface
 D3  D2 plus independently measured/calibrated shared A×B cost
 ```
 
+Strict cases are high-quality anchors. Their scarcity does not invalidate the
+broad real-world evidence route, and broad records never become D1/D2 merely by
+mentioning all relevant terms.
+
 Key files:
 
 ```text
@@ -93,29 +120,22 @@ docs/theory_empirical_identifiability_reassessment.md
 trait_architecture/matched_regime_registry.py
 ```
 
-### Part III-B: broad four-path effect synthesis
+### Part III-B: compatible quantitative effect strata
 
-Ideal D2/D3 cases may be rare. The broad route therefore records one
-`study × trait × outcome × model effect` at a time, retaining scale and design
-rather than forcing all studies into one pooled value.
+Where a study reports or permits recovery of a known effect type, it enters a
+route-specific registry as one `study × trait × outcome × model effect` at a
+time. Pooling occurs only inside compatible scales and causal designs.
 
 ```text
-A_to_pollination
-A_to_antagonism
-B_to_antagonism
-B_to_pollination
+flower colour -> pollinator visitation: log response ratio
+flower colour -> floral damage: odds ratio
+floral defence treatment -> florivory: log response ratio
+flower trait -> fruit set: standardised regression coefficient
 ```
 
-Role-specific effect distributions later constrain parameter envelopes for the
-Part I robustness sweep. Raw coefficients are never inserted directly into the
-fitness score, and shared cost \(c_{AD}\) remains a sensitivity parameter until
-allocation/cost evidence exists.
-
-The current empirical stopping rules are explicit: no pooled role-specific
-synthesis occurs until a role × reported-scale × causal-status stratum contains
-at least two independent study clusters. The evidence atlas also records
-verified but currently unextractable public-source cases, so a source lead is
-not mistaken for a registered effect.
+Raw coefficients are never inserted directly into the fitness score, and shared
+cost \(c_{AD}\) remains a sensitivity parameter until allocation/cost evidence
+exists.
 
 Key files:
 
@@ -129,16 +149,23 @@ trait_architecture/four_path_effects.py
 examples/audit_four_path_effects.py
 ```
 
+### Part IV: direct field panels
+
+When broad evidence shows an important channel is common but quantitatively
+incompatible, or when a Part I regime is not directly observable in published
+studies, build a self-contained panel that measures A, B, pollination,
+antagonism, and fitness on shared biological units.
+
 ## Interpretation boundary
 
 Interaction records are not fitness effects, and trait associations are not
-automatically selection, defence efficacy, or adaptation. D1 identifies channel
-paths; D2/D3 can be reported only as:
+automatically selection, defence efficacy, or adaptation. Broad evidence can be
+reported as:
 
 ```text
 compatible_with_declared_scenario
 contradicts_declared_scenario
-not_identified
+not_measured_or_not_identified
 ```
 
 The project distinguishes floral modules from leaf resource quality and leaf
