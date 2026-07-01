@@ -1,0 +1,9 @@
+query_id,route_family,query_text,primary_empirical_question,expected_contribution
+BPP01,B_to_pollination,"floral defense pollinator visitation experiment","Do experimentally altered flower-specific defenses change pollinator visitation?","Direct chemical-defense B-to-P candidates"
+BPP02,B_to_pollination,"floral defence pollinator visitation experiment","Do experimentally altered flower-specific defences change pollinator visitation?","British-spelling coverage"
+BPP03,B_to_pollination,"floral chemical defense pollinator preference experiment","Do floral chemical defenses alter pollinator preference?","Chemical barrier and choice candidates"
+BPP04,B_to_pollination,"nectar alkaloid pollinator preference experiment","Do nectar alkaloids alter visitor preference or visitation?","Reward-chemistry cost candidates"
+BPP05,B_to_pollination,"floral deterrent pollination experiment","Do flower-specific deterrents impose pollination costs?","Explicit deterrence-cost candidates"
+BPP06,B_to_pollination,"flower trichome pollinator visitation","Do flower trichomes alter pollinator visitation?","Physical barrier candidates"
+BPP07,B_to_pollination,"corolla trichome pollinator visitation","Do corolla trichomes alter pollinator visitation?","Corolla-specific physical barrier candidates"
+BPP08,B_to_pollination,"floral toxin pollinator visitation","Do floral toxins alter pollinator visitation?","Chemical deterrent candidates"
