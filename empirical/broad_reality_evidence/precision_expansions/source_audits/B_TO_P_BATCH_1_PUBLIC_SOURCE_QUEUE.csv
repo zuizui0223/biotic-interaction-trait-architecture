@@ -1,0 +1,5 @@
+queue_id,study_id,citation_or_doi,queue_status,route,trait_class,outcome_class,source_resolution_goal
+BPP1_Q001,Gelsemium_sempervirens_2007_alkaloid,10.1111/j.1461-0248.2007.01027.x,needs_repository_resolution,B_to_pollination,chemical_barrier,pollinator_preference_or_foraging,Recover raw or tabular bumblebee response to manipulated defensive nectar alkaloid
+BPP1_Q002,bird_nectar_alkaloid_2013,10.1111/j.1600-048x.2013.00079.x,needs_repository_resolution,B_to_pollination,chemical_barrier,pollinator_preference_or_foraging,Recover raw or tabular bird feeding response to nicotine concentration
+BPP1_Q003,Delphinium_barbeyi_2014_alkaloid,10.1111/1365-2745.12144,needs_repository_resolution,B_to_pollination,chemical_barrier,visitation_rate,Recover raw or tabular bumblebee response to manipulated nectar alkaloid concentration
+BPP1_Q004,Petunia_ele_12038,10.1111/ele.12038,needs_repository_resolution,B_to_antagonism,chemical_barrier,floral_damage_proportion,Recover raw or tabular florivory response to transgenic floral volatile blends

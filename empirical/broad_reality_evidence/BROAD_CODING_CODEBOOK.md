@@ -54,6 +54,7 @@ floral scent unless its barrier role is explicitly justified
 | Outcome class | Channel | Examples |
 |---|---|---|
 | `visitation_rate` | P | visits per flower/time, visitor probability |
+| `pollinator_preference_or_foraging` | P | choice proportion, feeding frequency/duration, treatment preference in a controlled assay |
 | `pollen_transfer` | P | pollen deposition/removal, stigma pollen load |
 | `pollination_success` | P | declared pollination treatment outcome, compatible pollen limitation proxy |
 | `floral_damage_proportion` | H | flowers/ovules damaged divided by exposure total |
@@ -61,6 +62,10 @@ floral scent unless its barrier role is explicitly justified
 | `robbery_rate` | H | nectar/pollen robbery with stated denominator |
 | `predation_probability` | H | flower or pre-dispersal seed predation event probability |
 | `fruit_set`, `seed_set` | W, not P by default | reproductive fitness outcomes |
+
+`pollinator_preference_or_foraging` is a P-channel response, but is not silently
+pooled with `visitation_rate`: a controlled feeder/choice assay has a different
+unit and exposure definition than visits to intact flowers in the field.
 
 Fruit set and seed set may be coded as pollination only when the paper directly
 establishes them as the declared pollination outcome and antagonism is not a
