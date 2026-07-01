@@ -23,11 +23,17 @@ Does the current OpenAlex head show that the historical 50-result cutoff and the
 omission of D01–D04 materially limited discovery breadth?
 ```
 
+OpenAlex's current API allows at most 100 results per response. The first audit
+therefore uses a single 100-result response per query, then treats its ordered
+first 50 as the comparable head and records rank 51–100 separately. It also
+records the API's full result count to determine whether a later cursor-paged
+expansion is needed.
+
 The audit compares, using the *current* OpenAlex index:
 
 ```text
-historical six queries: top 50 versus top 200
-D01–D04 routes:         top 50 and top 200
+historical six queries: top 50 versus top 100
+D01–D04 routes:         top 50 and top 100
 historical snapshot:     overlap with current historical-query results
 ```
 
@@ -35,8 +41,8 @@ historical snapshot:     overlap with current historical-query results
 
 ```text
 openalex_scope_query_report.csv
-    per-query current result count, returned top-50/top-200 counts, rank-51–200
-    additions, and whether the API reports more than 200 results.
+    per-query current result count, returned top-50/top-100 counts, rank-51–100
+    additions, and whether the API reports more than 100 results.
 
 openalex_scope_candidates.csv
     current bibliographic candidates with query IDs, seed routes, and retrieval
@@ -62,15 +68,16 @@ openalex_scope_summary.json
 ## Decision rules after the audit
 
 ```text
-If rank 51–200 adds material unique candidate coverage:
-    create an explicitly versioned expansion corpus using fixed page depth.
+If rank 51–100 adds material unique candidate coverage:
+    create an explicitly versioned expansion corpus using a declared cursor or
+    page-depth rule.
 
 If D01–D04 add material non-overlapping coverage:
     include those routes in the proposed expansion corpus, subject to a separate
     retrieval protocol.
 
-If one or more API meta-counts exceed 200:
-    do not call top-200 exhaustive; predeclare cursor paging or a relevance-depth
+If one or more API meta-counts exceed 100:
+    do not call top-100 exhaustive; predeclare cursor paging or a relevance-depth
     cutoff before building an expanded corpus.
 
 If current top-50 has limited overlap with the fixed snapshot:
