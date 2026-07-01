@@ -1,0 +1,43 @@
+name: Audit OpenAlex retrieval scope
+
+on:
+  pull_request:
+    paths:
+      - "trait_architecture/openalex_retrieval_scope_audit.py"
+      - "scripts/audit_openalex_retrieval_scope.py"
+      - "tests/test_openalex_retrieval_scope_audit.py"
+      - "empirical/matched_flower_regime/literature_seed_queries.csv"
+      - ".github/workflows/audit-openalex-retrieval-scope.yml"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Compare historical head depth with current scope routes
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python scripts/audit_openalex_retrieval_scope.py \
+            empirical/matched_flower_regime/literature_seed_queries.csv \
+            artifacts/openalex_retrieval_scope
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openalex-retrieval-scope-audit
+          path: artifacts/openalex_retrieval_scope/
+          if-no-files-found: error
