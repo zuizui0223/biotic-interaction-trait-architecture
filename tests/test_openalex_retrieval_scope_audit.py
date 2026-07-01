@@ -62,21 +62,21 @@ def test_scope_audit_detects_depth_and_omitted_route_expansion(monkeypatch: pyte
     results, candidates, report = scope.run_scope_audit(query_rows(), request_json=fake_request)
 
     assert len(results) == 10
-    assert len(candidates) == 2000
+    assert len(candidates) == 1000
     summary = report["summary"]
     counts = summary["current_result_counts"]
     assert counts["historical_six_query_top50_unique"] == 300
-    assert counts["historical_six_query_top200_unique"] == 1200
-    assert counts["historical_six_query_rank51_200_new_unique"] == 900
-    assert counts["D01_to_D04_top200_unique"] == 800
-    assert counts["D01_to_D04_not_in_current_historical_top200"] == 800
+    assert counts["historical_six_query_top100_unique"] == 600
+    assert counts["historical_six_query_rank51_100_new_unique"] == 300
+    assert counts["D01_to_D04_top100_unique"] == 400
+    assert counts["D01_to_D04_not_in_current_historical_top100"] == 400
     assert summary["historical_snapshot_overlap"]["fixed_in_current_historical_top50"] == 1
 
     by_query = {row["query_id"]: row for row in report["query_report_rows"]}
-    assert by_query["A01"]["new_ids_in_51_to_200"] == "150"
-    assert by_query["A01"]["api_count_exceeds_200"] == "true"
-    assert "current_historical_rank51_200" in {
-        row["retrieval_strata"] for row in candidates if row["candidate_id"] == "openalex:A01_199"
+    assert by_query["A01"]["new_ids_in_51_to_100"] == "50"
+    assert by_query["A01"]["api_count_exceeds_100"] == "true"
+    assert "current_historical_rank51_100" in {
+        row["retrieval_strata"] for row in candidates if row["candidate_id"] == "openalex:A01_99"
     }
     json.dumps(report)
 
@@ -89,7 +89,7 @@ def test_scope_audit_rejects_partial_api_outage(monkeypatch: pytest.MonkeyPatch)
             raise RuntimeError("HTTP Error 503: Service Unavailable")
         return fake_request(_, params)
 
-    with pytest.raises(RuntimeError, match="OpenAlex scope audit incomplete.*D04"):
+    with pytest.raises(RuntimeError, match="OpenAlex scope audit stopped at D04"):
         scope.run_scope_audit(query_rows(), request_json=partially_failing_request)
 
 
