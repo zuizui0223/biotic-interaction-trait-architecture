@@ -16,10 +16,12 @@ from __future__ import annotations
 
 import csv
 import json
+import time
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Iterable
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -27,10 +29,13 @@ from trait_architecture.fixed_candidate_universe import load_fixed_candidate_uni
 
 
 OPENALEX_WORKS_URL = "https://api.openalex.org/works"
-USER_AGENT = "biotic-interaction-trait-architecture retrieval-scope-audit/0.1"
+USER_AGENT = "biotic-interaction-trait-architecture retrieval-scope-audit/0.2"
 HISTORICAL_QUERY_IDS = frozenset({"A01", "A02", "B01", "B02", "C01", "C02"})
 D_LEVEL_QUERY_IDS = frozenset({"D01", "D02", "D03", "D04"})
 MAX_SCOPE_PAGE = 200
+REQUEST_INTERVAL_SECONDS = 1.0
+MAX_RETRIES = 4
+RETRYABLE_HTTP_CODES = frozenset({429, 500, 502, 503, 504})
 QUERY_REPORT_FIELDS = (
     "query_id",
     "seed_route",
@@ -59,6 +64,7 @@ CANDIDATE_FIELDS = (
     "seed_routes",
     "retrieval_strata",
 )
+_last_request_at = 0.0
 
 
 @dataclass(frozen=True)
@@ -85,16 +91,44 @@ def _bool(value: object) -> str:
     return "true" if bool(value) else "false"
 
 
+def _retry_delay(error: HTTPError, attempt: int) -> float:
+    retry_after = _text(error.headers.get("Retry-After") if error.headers else "")
+    try:
+        return max(float(retry_after), REQUEST_INTERVAL_SECONDS)
+    except ValueError:
+        return max(REQUEST_INTERVAL_SECONDS, 2.0 ** attempt)
+
+
 def _request_json(url: str, params: dict[str, str]) -> dict[str, Any]:
-    request = Request(
-        f"{url}?{urlencode(params)}",
-        headers={"Accept": "application/json", "User-Agent": USER_AGENT},
-    )
-    with urlopen(request, timeout=90) as response:  # nosec B310: fixed OpenAlex endpoint
-        payload = json.loads(response.read().decode("utf-8"))
-    if not isinstance(payload, dict):
-        raise ValueError("OpenAlex response is not a JSON object")
-    return payload
+    """Use a serial, retrying request path so temporary OpenAlex failures are not data."""
+
+    global _last_request_at
+    for attempt in range(MAX_RETRIES + 1):
+        delay = REQUEST_INTERVAL_SECONDS - (time.monotonic() - _last_request_at)
+        if delay > 0:
+            time.sleep(delay)
+        request = Request(
+            f"{url}?{urlencode(params)}",
+            headers={"Accept": "application/json", "User-Agent": USER_AGENT},
+        )
+        try:
+            with urlopen(request, timeout=90) as response:  # nosec B310: fixed OpenAlex endpoint
+                _last_request_at = time.monotonic()
+                payload = json.loads(response.read().decode("utf-8"))
+            if not isinstance(payload, dict):
+                raise ValueError("OpenAlex response is not a JSON object")
+            return payload
+        except HTTPError as error:
+            _last_request_at = time.monotonic()
+            if error.code not in RETRYABLE_HTTP_CODES or attempt >= MAX_RETRIES:
+                raise
+            time.sleep(_retry_delay(error, attempt))
+        except URLError:
+            _last_request_at = time.monotonic()
+            if attempt >= MAX_RETRIES:
+                raise
+            time.sleep(max(REQUEST_INTERVAL_SECONDS, 2.0 ** attempt))
+    raise RuntimeError("unreachable retry loop termination")
 
 
 def _work_id(work: dict[str, Any]) -> str:
@@ -142,8 +176,11 @@ def _fetch_query(
     )
     meta = response.get("meta")
     count: int | None = None
-    if isinstance(meta, dict) and isinstance(meta.get("count"), int):
-        count = int(meta["count"])
+    if isinstance(meta, dict):
+        try:
+            count = int(meta.get("count"))
+        except (TypeError, ValueError):
+            count = None
     works = response.get("results")
     if not isinstance(works, list):
         raise ValueError("OpenAlex response lacks results list")
@@ -162,7 +199,10 @@ def run_scope_audit(
     *,
     request_json: Callable[[str, dict[str, str]], dict[str, Any]] = _request_json,
 ) -> tuple[list[QueryScopeResult], list[dict[str, str]], dict[str, object]]:
-    """Compare current OpenAlex head depth and existing omitted D-level routes."""
+    """Compare current OpenAlex head depth and existing omitted D-level routes.
+
+    A partial API outage is a failed retrieval audit, not a zero-candidate result.
+    """
 
     selected = [
         row for row in query_rows
@@ -229,6 +269,10 @@ def run_scope_audit(
                 candidate_strata[candidate_id].add("current_D_route_top50")
             if scope and candidate_id in result.top_200_ids.difference(result.top_50_ids):
                 candidate_strata[candidate_id].add("current_D_route_rank51_200")
+
+    failures = [f"{item.query_id}: {item.message}" for item in results if item.status != "success"]
+    if failures:
+        raise RuntimeError("OpenAlex scope audit incomplete; no result may be interpreted. " + " | ".join(failures))
 
     historical_rows, receipt = load_fixed_candidate_universe()
     fixed_ids = {row["candidate_id"] for row in historical_rows}
