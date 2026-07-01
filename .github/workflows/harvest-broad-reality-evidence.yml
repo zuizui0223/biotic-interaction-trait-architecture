@@ -6,6 +6,7 @@ on:
       - "trait_architecture/broad_reality_evidence.py"
       - "trait_architecture/broad_reality_deep.py"
       - "trait_architecture/broad_reality_screen.py"
+      - "trait_architecture/priority_leak_audit.py"
       - "trait_architecture/broad_source_screening.py"
       - "trait_architecture/broad_calibration_batch.py"
       - "trait_architecture/broad_calibration_abstracts.py"
@@ -13,12 +14,14 @@ on:
       - "scripts/harvest_broad_reality_evidence.py"
       - "scripts/harvest_broad_reality_evidence_paged.py"
       - "scripts/screen_broad_reality_evidence.py"
+      - "scripts/build_priority_leak_audit.py"
       - "scripts/build_broad_source_screening_matrix.py"
       - "scripts/build_broad_calibration_batch.py"
       - "scripts/build_broad_calibration_abstract_packet.py"
       - "scripts/run_broad_meta_analysis.py"
       - "tests/test_broad_reality_evidence.py"
       - "tests/test_broad_reality_deep.py"
+      - "tests/test_priority_leak_audit.py"
       - "tests/test_broad_reality_screen.py"
       - "tests/test_broad_source_screening.py"
       - "tests/test_broad_calibration_batch.py"
@@ -37,46 +40,44 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       - name: Install package
         run: python -m pip install -e .
-
       - name: Build paged Crossref evidence corpus
         run: |
           python scripts/harvest_broad_reality_evidence_paged.py \
             empirical/broad_reality_evidence/broad_evidence_query_registry.csv \
             artifacts/broad_reality_evidence \
             --rows-per-query 2000
-
       - name: Create metadata-only shallow-screen cohort
         run: |
           python scripts/screen_broad_reality_evidence.py \
             artifacts/broad_reality_evidence/broad_reality_evidence_candidates.csv \
             artifacts/broad_reality_evidence
-
+      - name: Build priority leakage audit queue
+        run: |
+          python scripts/build_priority_leak_audit.py \
+            artifacts/broad_reality_evidence/broad_reality_evidence_screened.csv \
+            artifacts/broad_reality_evidence/priority_leak_audit \
+            --per-route-per-group 30
       - name: Build source-screening matrix for the priority cohort
         run: |
           python scripts/build_broad_source_screening_matrix.py \
             artifacts/broad_reality_evidence/broad_reality_evidence_priority.csv \
             artifacts/broad_reality_evidence/broad_source_screening_matrix.csv
-
       - name: Select route-balanced calibration batch
         run: |
           python scripts/build_broad_calibration_batch.py \
             artifacts/broad_reality_evidence/broad_reality_evidence_priority.csv \
             artifacts/broad_reality_evidence/broad_calibration_batch.csv \
             --per-route 10
-
       - name: Retrieve Crossref abstracts for calibration source screening
         run: |
           python scripts/build_broad_calibration_abstract_packet.py \
             artifacts/broad_reality_evidence/broad_calibration_batch.csv \
             artifacts/broad_reality_evidence/broad_calibration_abstract_packet.csv
-
       - name: Validate empty-to-populated broad meta-analysis pipeline
         run: |
           python scripts/run_broad_meta_analysis.py \
@@ -84,7 +85,6 @@ jobs:
             empirical/broad_reality_evidence/broad_effect_extractions.csv \
             empirical/broad_reality_evidence/broad_meta_analysis_strata.csv \
             artifacts/broad_meta_analysis
-
       - uses: actions/upload-artifact@v4
         if: always()
         with:
