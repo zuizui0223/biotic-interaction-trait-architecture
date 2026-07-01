@@ -1,0 +1,68 @@
+name: Validate current theory-meta boundary
+
+on:
+  pull_request:
+    paths:
+      - "configs/part_i_robustness_grid.json"
+      - "scripts/run_part_i_robustness.py"
+      - "scripts/run_broad_meta_analysis.py"
+      - "scripts/validate_current_theory_meta.py"
+      - "trait_architecture/model.py"
+      - "trait_architecture/robustness.py"
+      - "trait_architecture/broad_meta_analysis.py"
+      - "trait_architecture/theory_meta_validation.py"
+      - "empirical/broad_reality_evidence/broad_route_records.csv"
+      - "empirical/broad_reality_evidence/broad_effect_extractions.csv"
+      - "empirical/broad_reality_evidence/broad_meta_analysis_strata.csv"
+      - "tests/test_theory_meta_validation.py"
+      - ".github/workflows/validate-current-theory-meta.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package and test dependency
+        run: python -m pip install -e '.[dev]'
+
+      - name: Run theory-meta validator tests
+        run: python -m pytest tests/test_theory_meta_validation.py
+
+      - name: Reproduce Part I robustness from current configuration
+        run: |
+          python scripts/run_part_i_robustness.py \
+            configs/part_i_robustness_grid.json \
+            artifacts/current_theory_meta_validation/part_i
+
+      - name: Recompute broad direction map and quantitative readiness from registered records
+        run: |
+          python scripts/run_broad_meta_analysis.py \
+            empirical/broad_reality_evidence/broad_route_records.csv \
+            empirical/broad_reality_evidence/broad_effect_extractions.csv \
+            empirical/broad_reality_evidence/broad_meta_analysis_strata.csv \
+            artifacts/current_theory_meta_validation/broad_meta
+
+      - name: Validate current theory-to-meta boundary
+        run: |
+          python scripts/validate_current_theory_meta.py \
+            configs/part_i_robustness_grid.json \
+            artifacts/current_theory_meta_validation/part_i/part_i_robustness_report.json \
+            artifacts/current_theory_meta_validation/broad_meta/broad_direction_map.csv \
+            artifacts/current_theory_meta_validation/broad_meta/broad_meta_analysis_summary.csv \
+            artifacts/current_theory_meta_validation/validation
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: current-theory-meta-validation
+          path: artifacts/current_theory_meta_validation/
+          if-no-files-found: error
