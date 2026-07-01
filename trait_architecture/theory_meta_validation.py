@@ -29,7 +29,7 @@ CHECK_FIELDS = DIRECTION_FIELDS + (
 
 
 def _text(value: object) -> str:
-    return str(value or "").strip()
+    return "" if value is None else str(value).strip()
 
 
 def _int(value: object, field: str) -> int:
