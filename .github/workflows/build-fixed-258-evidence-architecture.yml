@@ -1,0 +1,42 @@
+name: Build fixed 258 evidence architecture
+
+on:
+  pull_request:
+    paths:
+      - "trait_architecture/evidence_architecture_audit.py"
+      - "scripts/build_fixed_258_evidence_architecture_matrix.py"
+      - "tests/test_evidence_architecture_audit.py"
+      - "empirical/evidence_architecture/**"
+      - ".github/workflows/build-fixed-258-evidence-architecture.yml"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Rebuild the immutable 258-work coding matrix
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python scripts/build_fixed_258_evidence_architecture_matrix.py \
+            artifacts/fixed_258_evidence_architecture
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fixed-258-evidence-architecture
+          path: artifacts/fixed_258_evidence_architecture/
+          if-no-files-found: error

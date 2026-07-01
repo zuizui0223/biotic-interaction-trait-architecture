@@ -16,6 +16,23 @@ atlas    = verified effects plus high-information, blocked, and inaccessible cas
 The atlas is not a meta-analysis, an evidence-weighted parameter envelope, or a
 claim about a universal attraction–barrier trade-off.
 
+## Separate use of the fixed 258-work corpus
+
+The stopping rules in this atlas govern **new effect extraction and broad
+candidate discovery**. They do not discard the fixed 258-work corpus.
+
+That corpus now has a separate use: the all-258 evidence-architecture audit
+asks whether studies actually co-measure A, B, pollination, floral antagonism,
+and fitness in designs capable of identifying the four paths. It is a
+study-design/identifiability analysis, not an effect-size synthesis.
+
+```text
+all-258 architecture audit  -> every work is a design observation
+four-path effect registry   -> only eligible source × trait × outcome effects
+```
+
+See `empirical/evidence_architecture/ALL_258_EVIDENCE_ARCHITECTURE_PROTOCOL.md`.
+
 ## Verified effect coverage
 
 | Part I path | Independent study clusters | Compatible effect-scale strata | Current state |
@@ -58,9 +75,10 @@ public_source_inaccessible
     biological null result.
 ```
 
-## Immediate work rule
+## Immediate effect-registry work rule
 
-There is **one** remaining literature action before broad discovery resumes:
+There is **one** remaining literature action before broad effect discovery
+resumes:
 
 ```text
 Gorden and Adler (2016), Impatiens capensis
@@ -78,12 +96,14 @@ Conduct one public full-text/table screen that answers only:
 If any answer needed for eligibility is no or unrecoverable, record the reason
 and close the source. Do not create a new extraction pipeline for it.
 
-## Stopping rules for public-literature work
+## Stopping rules for public effect-literature work
 
-### Stop broad candidate discovery now
+### Stop broad effect candidate discovery now
 
 Do not add more broad OpenAlex queries or enlarge the fixed candidate universe
-until the pending 2016 Impatiens table screen is closed.
+for the purpose of effect extraction until the pending 2016 Impatiens table
+screen is closed. The fixed corpus remains active for the all-258
+study-design/identifiability audit.
 
 ### Stop role-specific synthesis before pooling
 
@@ -105,11 +125,12 @@ Do not describe the program as D2 or D3 until there is a linked reproductive
 fitness surface and, for D3, an independently measured/calibrated A×B allocation
 or shared-cost component.
 
-## Transition trigger: public synthesis to a self-contained field panel
+## Transition trigger: effect synthesis to a self-contained field panel
 
-The public route has achieved a feasibility result: a rigorous four-path ledger
-is possible, but compatible independent replication is sparse. Move the main
-scientific effort to a self-contained field panel when either condition holds:
+The public effect route has achieved a feasibility result: a rigorous four-path
+ledger is possible, but compatible independent replication is sparse. Move the
+main biological-effort to a self-contained field panel when either condition
+holds:
 
 ```text
 A. the one pending Gorden and Adler (2016) screen closes without an eligible,
@@ -117,6 +138,8 @@ A. the one pending Gorden and Adler (2016) screen closes without an eligible,
 B. no second compatible independent effect is added to any sparse path after
    one targeted full-text/table screen per verified public-source route.
 ```
+
+This does not close the all-258 study-design audit.
 
 A self-contained pilot should measure on the same biological unit:
 
