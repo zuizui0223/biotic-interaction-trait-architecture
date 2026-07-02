@@ -1,5 +1,14 @@
 # Floral trait--animal response effect-size synthesis v1
 
+> **Positioning (finalized).** This document specifies the full-text screening and
+> effect-size extraction machinery for the **deferred pooled layer** (future
+> Layer 4) described in `BROAD_META_ANALYSIS_PROTOCOL.md`. It is *not* the current
+> primary broad-evidence result. The primary products are the source-adjudicated
+> direction map and the yield meta-analysis; pooled effect sizes stay gated on
+> primary-source recovery of the Layer 4 exact-stratum anchors. Read the "primary
+> quantitative synthesis" language below as the target design for that future
+> layer, not a claim about what the fixed corpus can pool today.
+
 ## Why this replaces the narrow primary meta-analysis
 
 The earlier narrow question was: does a direct manipulation of floral defence
