@@ -1,0 +1,46 @@
+name: Build floral trait animal response meta queue
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_id:
+        description: "Artifact ID for fixed-broad-abstract-evidence-map"
+        required: true
+        default: "8034748524"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build-meta-queue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Download fixed broad-map artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ inputs.artifact_id }}
+        run: |
+          gh api -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" > fixed-map.zip
+          unzip -q fixed-map.zip -d fixed-map
+          test -f fixed-map/broad_abstract_evidence_records.csv
+          test -f fixed-map/fixed_l1_abstract_packet.csv
+      - name: Build fixed-corpus response meta packet
+        run: |
+          python scripts/build_floral_trait_animal_response_meta_packet.py \
+            fixed-map/broad_abstract_evidence_records.csv \
+            fixed-map/fixed_l1_abstract_packet.csv \
+            artifacts/floral_trait_animal_response_meta
+      - uses: actions/upload-artifact@v4
+        with:
+          name: floral-trait-animal-response-meta-queue
+          path: artifacts/floral_trait_animal_response_meta/
+          if-no-files-found: error
