@@ -16,6 +16,8 @@ on:
       - "trait_architecture/broad_meta_analysis.py"
       - "trait_architecture/hierarchical_evidence_synthesis.py"
       - "trait_architecture/meta_analysis_intake.py"
+      - "trait_architecture/evidence_yield_meta_analysis.py"
+      - "trait_architecture/evidence_yield_meta_model.py"
       - "scripts/harvest_broad_reality_evidence.py"
       - "scripts/harvest_broad_reality_evidence_paged.py"
       - "scripts/screen_broad_reality_evidence.py"
@@ -31,6 +33,7 @@ on:
       - "scripts/run_broad_meta_analysis.py"
       - "scripts/build_hierarchical_evidence_synthesis.py"
       - "scripts/build_meta_analysis_intake.py"
+      - "scripts/run_l1_l2_evidence_yield_meta.py"
       - "tests/test_broad_reality_evidence.py"
       - "tests/test_broad_reality_deep.py"
       - "tests/test_priority_leak_audit.py"
@@ -45,6 +48,7 @@ on:
       - "tests/test_broad_meta_analysis.py"
       - "tests/test_hierarchical_evidence_synthesis.py"
       - "tests/test_meta_analysis_intake.py"
+      - "tests/test_evidence_yield_meta_analysis.py"
       - "empirical/broad_reality_evidence/**"
       - ".github/workflows/harvest-broad-reality-evidence.yml"
   workflow_dispatch:
@@ -140,6 +144,12 @@ jobs:
             empirical/broad_reality_evidence/broad_effect_extractions.csv \
             empirical/broad_reality_evidence/precision_expansions/fulltext/B_TO_P_FULLTEXT_READING_QUEUE_v1.csv \
             artifacts/meta_analysis_intake
+      - name: Build L1 L2 evidence-yield meta-analysis
+        run: |
+          python scripts/run_l1_l2_evidence_yield_meta.py \
+            artifacts/broad_reality_evidence/broad_reality_evidence_screened.csv \
+            empirical/broad_reality_evidence/priority_leak_audit/priority_leak_audit_yield_by_route_group_v1.csv \
+            artifacts/l1_l2_evidence_yield_meta
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -149,4 +159,5 @@ jobs:
             artifacts/broad_meta_analysis/
             artifacts/hierarchical_evidence_synthesis/
             artifacts/meta_analysis_intake/
+            artifacts/l1_l2_evidence_yield_meta/
           if-no-files-found: warn
