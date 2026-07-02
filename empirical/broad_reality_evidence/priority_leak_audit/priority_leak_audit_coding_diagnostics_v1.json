@@ -1,0 +1,20 @@
+{
+  "abstract_available_rows": 137,
+  "interpretation_boundary": "This route-stratified screen audit evaluates the metadata priority rule. Direct-route screen decisions do not establish effect directions, quantitative eligibility, causal effects, or corpus-wide prevalence.",
+  "route_screen_status_counts": {
+    "direct_route_absent": 125,
+    "direct_route_present": 11,
+    "unassessed": 164
+  },
+  "sampled_row_count": 300,
+  "source_receipt": {
+    "artifact_digest": "sha256:ce29ec7e7ce1d537e2bf2e1b953ef17cf87e030e6cc9b61f703e222e51c69a7f",
+    "artifact_id": 8028390020,
+    "workflow_run": 28563489357
+  },
+  "source_screen_status_counts": {
+    "excluded": 8,
+    "included_for_source_coding": 128,
+    "unassessed": 164
+  }
+}
