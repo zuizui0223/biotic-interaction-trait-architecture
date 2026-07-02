@@ -1,184 +1,126 @@
-# Broad real-world evidence: meta-analysis design v1
+# Broad real-world evidence: floral trait--animal response synthesis v2
 
 ## Position in the research program
 
 ```text
-Part I   mathematical robustness map is the primary inferential object
-Part II  broad literature evidence tests support, contradiction, heterogeneity, and gaps
-Part III strict four-path records are high-quality quantitative anchors
+Part I   attraction--defence regime mathematics and sensitivity map
+Part II  calibrated broad L1/L2 evidence map and full-text screening universe
+Part III route-specific floral trait--animal response effect-size syntheses
+Part IV  direct floral-defence experiments as high-causal-confidence confirmation
 ```
 
-The broad synthesis does **not** estimate universal biological coefficients for
-Part I. It evaluates whether real-world studies are directionally compatible
-with the channel assumptions, where that compatibility changes with trait class,
-outcome, study design, and context.
+Part III replaces the earlier idea that the only quantitative synthesis should
+be direct floral-defence manipulations. Direct B-flower experiments remain an
+important subset, but the primary quantitative design now uses every eligible
+flower-trait study that measures an animal response and has a recoverable effect
+size.
 
-## Questions
+The synthesis never estimates universal coefficients for Part I. It tests
+whether the empirical direction and magnitude of each route vary by trait role,
+animal outcome, study design, and ecological context.
 
-For each direct channel, ask separately:
+## Four route-specific questions
 
-```text
-A_to_pollination   does greater declared attraction associate with greater pollination?
-A_to_antagonism    does greater declared attraction associate with greater floral antagonism?
-B_to_antagonism    does greater declared flower barrier associate with less floral antagonism?
-B_to_pollination   does greater declared flower barrier associate with less pollination?
-```
-
-The model-declared channel expectations are:
-
-| Route | Expected observed association | Part I parameter |
+| Route | Question | Direction expected by the current model |
 |---|---|---|
-| `A_to_pollination` | positive | `b_A` |
-| `A_to_antagonism` | positive | `d_A` |
-| `B_to_antagonism` | negative | `e_F` |
-| `B_to_pollination` | negative | `c_D` |
+| `A_to_pollinator` | Does higher floral attraction increase pollinator response? | positive (`b_A`) |
+| `A_to_antagonist` | Does higher floral attraction increase floral-antagonist response? | positive (`d_A`) |
+| `B_to_antagonist` | Does stronger flower-specific barrier/deterrence reduce antagonist response? | negative (`e_F`) |
+| `B_to_pollinator` | Does stronger flower-specific barrier/deterrence reduce pollinator response? | negative (`c_D`) |
 
-These are channel assumptions, not universal claims. A contrary sign is a
-potential trait-role, context, measurement, or regime boundary; it is not
-silently recoded or discarded.
+A contrary sign is retained as evidence of a trait-role, context, or regime
+boundary. It is never reversed merely to agree with the theory.
 
 ## Unit of evidence
 
 ```text
-screening unit         candidate work
-shallow coding unit    study × direct route × trait class × outcome class
-quantitative unit      study-cluster × route × trait class × outcome class × metric × design
+candidate unit        fixed-corpus abstract carrying a flower-context A/B × P/H edge
+screening unit        candidate work × candidate route
+extraction unit       effect_id from a full-text study
+analysis unit         independent study × route × design × outcome family × effect family
 ```
 
-`study_cluster_id` represents a genuinely independent data-generating panel.
-Multiple papers, traits, time points, or models from one panel are not
-independent meta-analytic replicates.
+Multiple papers, traits, time points, or models from one data-generating panel
+are not independent replicates. Version 1 uses one prespecified primary effect
+per independent study in each analysis unit. Dependence-aware multilevel models
+are a future extension, not an implicit assumption.
 
-## Layer 1: directional evidence map
+## Eligibility
 
-All source-coded primary studies can contribute one primary direction record per
-independent cluster and route/trait/outcome/design cell:
+An effect enters the quantitative layer only when all conditions hold:
 
-```text
-positive
-negative
-mixed
-null
-not_reported
-```
+1. the focal trait is assigned to `A_flower` or `B_flower`;
+2. the trait is measured or manipulated on a flower, inflorescence, nectar, or
+   reproductive structure;
+3. the response is pollinator or floral-antagonist specific;
+4. the design is a direct experiment, a choice assay, or an observational
+   association;
+5. a compatible effect size and variance are recoverable;
+6. independent study identity can be declared.
 
-The map reports cluster-level counts and the fraction of evaluable signs that
-match the declared channel expectation. It does not treat sign counts as causal
-effect estimation, and it never weights a sign by citation count or metadata
-rank.
+Leaf, stem, bark, wood, root, and unlocalized whole-plant defence evidence is
+not B-flower evidence. Pigment, scent, morphology, or compatibility studies
+without an animal-response measurement are not quantitative route records.
 
-Direction-map interpretation:
+## Designs and effect families
 
-```text
-< 3 evaluable independent clusters  -> insufficient_directional_clusters
->= 3 and >= 80% compatible signs    -> mostly_compatible_with_channel_assumption
->= 3 and <= 20% compatible signs    -> mostly_contradictory_to_channel_assumption
-otherwise                            -> mixed_or_context_dependent
-```
-
-The labels describe the versioned corpus and coded stratum only.
-
-## Layer 2: compatible quantitative mini-meta-analyses
-
-Numerical pooling is allowed only inside a predeclared stratum with the same:
-
-```text
-route
-trait class
-outcome class
-effect metric
-design class
-```
-
-No conversion is made between unrelated ecological outcomes or causal designs.
-For example, pollinator visitation is not pooled with fruit set, and an
-observational trait association is not pooled with a defence manipulation.
-
-Supported effect metrics are:
-
-| Metric | Positive value means | Typical source form |
+| Study design | Allowed effect families in v1 | Pooling boundary |
 |---|---|---|
-| `log_response_ratio` | high-trait/treatment group has higher outcome | group means, SDs, n |
-| `log_odds_ratio` | high-trait/treatment group has higher event odds | 2×2 counts |
-| `fisher_z` | positive trait–outcome correlation | Pearson r, n |
-| `hedges_g` | high-trait/treatment group has higher outcome | group means, SDs, n |
-| `standardized_beta` | positive standardized trait–outcome association | reported model coefficient + SE |
+| direct experiment | log response ratio, Hedges' g, log odds ratio, log rate ratio | exact route × outcome family × effect family |
+| choice assay | Hedges' g, log odds ratio, log rate ratio | exact route × outcome family × effect family |
+| observational association | Fisher's z, converted from a declared trait--response association | never pooled with experimental or choice effects |
 
-Every extracted effect is oriented so that a positive value means **more declared
-trait or barrier, more declared outcome**. This preserves the model-facing
-interpretation: `A→P` and `A→H` are expected positive, while `B→H` and `B→P`
-are expected negative.
+All effects are oriented so a positive value means that greater focal trait value
+or the high-trait treatment increases the measured animal response: visitation,
+foraging, attack, or damage. Thus A→P and A→H are model-compatible when
+positive, whereas B→H and B→P are model-compatible when negative.
 
-### Pooling rule
+## Quantitative outputs
 
-```text
-k < 3 independent clusters  -> no pooled estimate; report effects and gap only
-k >= 3                       -> exploratory DerSimonian–Laird random-effects estimate
-k >= 5                       -> stability-eligible random-effects estimate
-```
-
-The output always reports `k`, fixed-effect heterogeneity `Q`, `I²`, and
-DerSimonian–Laird `tau²`. A pooled direction is compared with the channel
-assumption but is never inserted as a raw Part I parameter.
-
-## Layer 3: bridge to Part I
-
-The broad map may indicate which channel assumptions have consistent,
-contradictory, or context-specific real-world support. Only effect strata with:
+The first outputs are forest plots and route-specific summaries inside each:
 
 ```text
-- a compatible outcome/metric/design definition;
-- at least five independent study clusters;
-- transparent uncertainty and heterogeneity diagnostics;
-- trait-role interpretation preserved;
+route × study_design × outcome_family × effect_family
 ```
-
-may inform a *standardized scenario envelope* for sensitivity analysis. Strict
-four-path records remain the stronger calibration anchors. Shared cost `c_AD`
-remains a scenario parameter unless independent allocation/cost evidence is
-obtained.
-
-## Coding and extraction contracts
 
 ```text
-broad_source_screening_matrix.csv
-    one row per priority candidate; source access and inclusion decisions
-
-broad_route_records.csv
-    one row per source-coded study × direct route × trait × outcome record
-
-broad_effect_extractions.csv
-    one row per candidate quantitative effect; raw data or reported effect with
-    orientation, uncertainty, study cluster, and eligibility state
-
-broad_meta_analysis_strata.csv
-    predeclared exact compatibility strata and thresholds
+k < 2 independent studies    narrative evidence only
+2 <= k < 5                   forest plot and descriptive uncertainty; no primary pooled claim
+k >= 5                       random-effects summary eligible
 ```
 
-A source record can contribute to the direction map even when it has no usable
-numerical effect. A numerical effect cannot enter a pool unless it passes its
-metric, orientation, uncertainty, and independence checks.
+No primary summary pools:
 
-## Explicit prohibitions
+- observational Fisher-z associations with experimental or choice effects;
+- visitation/choice with pollen transfer or reproductive output;
+- floral damage with antagonist abundance unless explicitly declared as the same
+  outcome family;
+- different organs;
+- multiple primary effects from the same independent study.
+
+## Broad map and confirmation layer
+
+The broad L1/L2 corpus is retained as a calibrated discovery and missingness map.
+It supplies a fixed full-text queue but never supplies numerical effect sizes.
+Automatic abstract tiers only determine reading order.
+
+Direct B-flower manipulation studies are tagged during extraction and reported
+as a high-causal-confidence sensitivity subset. They test the original narrow
+question without forcing the entire empirical program to depend on its small
+candidate set.
+
+## Relation to Part I
+
+The current regime condition remains unchanged:
 
 ```text
-- Do not pool signs as effect sizes.
-- Do not pool different trait classes merely because both are called "attraction" or "defence".
-- Do not pool visitation, pollen transfer, fruit set, and seed set.
-- Do not treat multiple outcomes from a shared panel as independent without a declared multivariate model.
-- Do not invert a contrary effect to force agreement with the model.
-- Do not call a broad meta-analysis a direct D1/D2 test.
+∂²W/∂A∂D = H*d_A*e_F - P*b_A*c_D*exp(-c_D*D)*(1-c_R*R) - c_AD
 ```
 
-## Primary outputs
+Route-specific syntheses can determine whether signs are supported in defined
+contexts and which trait/outcome cells are data-poor. They do not identify `P`,
+`H`, `c_AD`, or `c_R`, and they cannot infer A--B covariance by combining
+separate route analyses.
 
-```text
-broad_direction_map.csv
-broad_meta_analysis_summary.csv
-broad_meta_analysis_effects_used.csv
-broad_meta_analysis_diagnostics.json
-```
-
-The key empirical result is a structured map of support, contradiction,
-heterogeneity, and missingness across the four channels—not a single global
-mean effect.
+The detailed full-text screening and extraction contract is in
+`FLORAL_TRAIT_ANIMAL_RESPONSE_META_PROTOCOL_v1.md`.
