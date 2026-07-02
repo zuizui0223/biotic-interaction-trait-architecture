@@ -70,6 +70,14 @@ def test_broad_map_separates_candidate_coverage_from_directional_support():
             "crossref_abstract_available": "true",
             "crossref_abstract_text": "Floral trichomes reduced florivory in a field study.",
         },
+        {
+            "candidate_id": "d", "doi": "10.test/d", "publication_year": "2024", "work_type": "journal-article",
+            "route_families": "B_to_antagonism", "source_queries": "BH02",
+            "shallow_screen_status": "priority_for_shallow_source_coding",
+            "abstract_retrieval_state": "looked_up_from_fixed_candidate_doi", "crossref_lookup_status": "success",
+            "crossref_abstract_available": "true",
+            "crossref_abstract_text": "Leaf trichomes reduced herbivory in a field study.",
+        },
     ]
     records = classify_rows(packet)
     edges = summarize_edges(records)
