@@ -68,31 +68,28 @@ jobs:
           python scripts/screen_broad_reality_evidence.py \
             artifacts/broad_reality_evidence/broad_reality_evidence_candidates.csv \
             artifacts/broad_reality_evidence
-      - name: Build priority leakage audit queue
+      - name: Build current priority leakage audit queue
         run: |
           python scripts/build_priority_leak_audit.py \
             artifacts/broad_reality_evidence/broad_reality_evidence_screened.csv \
             artifacts/broad_reality_evidence/priority_leak_audit \
             --per-route-per-group 30
-      - name: Retrieve Crossref abstracts for priority leakage audit
+      - name: Retrieve Crossref abstracts for current priority leakage audit
         run: |
           python scripts/build_priority_leak_audit_abstract_packet.py \
             artifacts/broad_reality_evidence/priority_leak_audit/priority_leak_audit_queue.csv \
             artifacts/broad_reality_evidence/priority_leak_audit/priority_leak_audit_abstract_packet.csv
-      - name: Materialize registered priority-leak audit adjudication
+      - name: Build current priority-leak audit coding sheet
         run: |
-          python scripts/apply_priority_leak_audit_decisions.py \
+          python scripts/build_priority_leak_audit_coding_sheet.py \
             artifacts/broad_reality_evidence/priority_leak_audit/priority_leak_audit_abstract_packet.csv \
-            empirical/broad_reality_evidence/priority_leak_audit/priority_leak_audit_abstract_overrides_v1.csv \
+            artifacts/broad_reality_evidence/priority_leak_audit/priority_leak_audit_coding_sheet.csv
+      - name: Summarize current priority-leak audit coding state
+        run: |
+          python scripts/summarize_priority_leak_audit.py \
+            artifacts/broad_reality_evidence/priority_leak_audit/priority_leak_audit_abstract_packet.csv \
             artifacts/broad_reality_evidence/priority_leak_audit/priority_leak_audit_coding_sheet.csv \
             artifacts/broad_reality_evidence/priority_leak_audit
-      - name: Verify registered priority-leak audit snapshot
-        run: |
-          python scripts/validate_priority_leak_audit_adjudication_snapshot.py \
-            artifacts/broad_reality_evidence/priority_leak_audit/priority_leak_audit_abstract_packet.csv \
-            empirical/broad_reality_evidence/priority_leak_audit/priority_leak_audit_abstract_overrides_v1.csv \
-            empirical/broad_reality_evidence/priority_leak_audit/priority_leak_audit_yield_by_route_group_v1.csv \
-            empirical/broad_reality_evidence/priority_leak_audit/priority_leak_audit_yield_comparisons_v1.csv
       - name: Build source-screening matrix for the priority cohort
         run: |
           python scripts/build_broad_source_screening_matrix.py \
