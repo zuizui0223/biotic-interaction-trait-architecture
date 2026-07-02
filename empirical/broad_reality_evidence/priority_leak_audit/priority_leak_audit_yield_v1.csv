@@ -1,0 +1,11 @@
+route_family_audit,audit_group,sampled_rows,route_screenable_rows,direct_route_present_rows,direct_route_absent_rows,unassessed_rows,completion_fraction,direct_route_yield,source_snapshot
+A_to_pollination,priority,30,20,6,14,10,0.666667,0.300000,priority_leak_audit_abstract_adjudication_v1
+A_to_pollination,biological_nonpriority,30,9,1,8,21,0.300000,0.111111,priority_leak_audit_abstract_adjudication_v1
+A_to_antagonism,priority,30,17,1,16,13,0.566667,0.058824,priority_leak_audit_abstract_adjudication_v1
+A_to_antagonism,biological_nonpriority,30,6,0,6,24,0.200000,0.000000,priority_leak_audit_abstract_adjudication_v1
+B_to_antagonism,priority,30,19,1,18,11,0.633333,0.052632,priority_leak_audit_abstract_adjudication_v1
+B_to_antagonism,biological_nonpriority,30,4,0,4,26,0.133333,0.000000,priority_leak_audit_abstract_adjudication_v1
+B_to_pollination,priority,30,20,0,20,10,0.666667,0.000000,priority_leak_audit_abstract_adjudication_v1
+B_to_pollination,biological_nonpriority,30,9,0,9,21,0.300000,0.000000,priority_leak_audit_abstract_adjudication_v1
+joint_channels,priority,30,18,1,17,12,0.600000,0.055556,priority_leak_audit_abstract_adjudication_v1
+joint_channels,biological_nonpriority,30,14,1,13,16,0.466667,0.071429,priority_leak_audit_abstract_adjudication_v1
