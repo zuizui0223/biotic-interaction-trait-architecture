@@ -15,6 +15,7 @@ on:
       - "trait_architecture/broad_calibration_abstracts.py"
       - "trait_architecture/broad_meta_analysis.py"
       - "trait_architecture/hierarchical_evidence_synthesis.py"
+      - "trait_architecture/meta_analysis_intake.py"
       - "scripts/harvest_broad_reality_evidence.py"
       - "scripts/harvest_broad_reality_evidence_paged.py"
       - "scripts/screen_broad_reality_evidence.py"
@@ -29,6 +30,7 @@ on:
       - "scripts/build_broad_calibration_abstract_packet.py"
       - "scripts/run_broad_meta_analysis.py"
       - "scripts/build_hierarchical_evidence_synthesis.py"
+      - "scripts/build_meta_analysis_intake.py"
       - "tests/test_broad_reality_evidence.py"
       - "tests/test_broad_reality_deep.py"
       - "tests/test_priority_leak_audit.py"
@@ -42,6 +44,7 @@ on:
       - "tests/test_broad_calibration_abstracts.py"
       - "tests/test_broad_meta_analysis.py"
       - "tests/test_hierarchical_evidence_synthesis.py"
+      - "tests/test_meta_analysis_intake.py"
       - "empirical/broad_reality_evidence/**"
       - ".github/workflows/harvest-broad-reality-evidence.yml"
   workflow_dispatch:
@@ -126,6 +129,17 @@ jobs:
             empirical/broad_reality_evidence/broad_effect_extractions.csv \
             empirical/broad_reality_evidence/precision_expansions/fulltext/B_TO_P_FULLTEXT_READING_QUEUE_v1.csv \
             artifacts/hierarchical_evidence_synthesis
+      - name: Build fixed-corpus meta-analysis intake
+        run: |
+          python scripts/build_meta_analysis_intake.py \
+            artifacts/broad_reality_evidence/broad_reality_evidence_candidates.csv \
+            artifacts/broad_reality_evidence/broad_reality_evidence_screened.csv \
+            empirical/broad_reality_evidence/priority_leak_audit/priority_leak_audit_yield_v1.csv \
+            empirical/broad_reality_evidence/broad_route_records.csv \
+            empirical/broad_reality_evidence/broad_meta_analysis_strata.csv \
+            empirical/broad_reality_evidence/broad_effect_extractions.csv \
+            empirical/broad_reality_evidence/precision_expansions/fulltext/B_TO_P_FULLTEXT_READING_QUEUE_v1.csv \
+            artifacts/meta_analysis_intake
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -134,4 +148,5 @@ jobs:
             artifacts/broad_reality_evidence/
             artifacts/broad_meta_analysis/
             artifacts/hierarchical_evidence_synthesis/
+            artifacts/meta_analysis_intake/
           if-no-files-found: warn
