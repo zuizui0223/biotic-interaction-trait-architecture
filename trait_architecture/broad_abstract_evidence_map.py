@@ -12,7 +12,6 @@ parameter magnitude.
 from __future__ import annotations
 
 import csv
-from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Iterable
 
@@ -23,14 +22,16 @@ FLORAL_CONTEXT_TERMS = (
 )
 A_TERMS = (
     "colour", "color", "display", "floral size", "flower size", "scent", "fragrance", "reward",
-    "nectar", "orientation", "resupination", "corolla", "petal", "inflorescence", "floral signal",
+    "nectar reward", "nectar volume", "nectar production", "nectar secretion", "sugar concentration",
+    "orientation", "resupination", "corolla", "petal", "inflorescence", "floral signal",
     "flower shape", "floral morphology",
 )
-B_TERMS = (
+B_CORE_TERMS = (
     "defence", "defense", "alkaloid", "toxin", "toxic", "chemical deterrent", "deterrence",
     "repellent", "secondary metabolite", "phenolic", "tannin", "trichome", "spine", "spines",
-    "sticky", "floral volatile", "nectar alkaloid", "barrier",
+    "sticky", "nectar alkaloid", "barrier",
 )
+B_CONTEXTUAL_TERMS = ("volatile", "volatiles")
 P_TERMS = (
     "pollination", "pollinator", "pollinators", "visitation", "visitor", "visitors", "pollen transfer",
     "pollen deposition", "pollen receipt", "pollen removal", "pollination success", "outcross",
@@ -106,10 +107,12 @@ def classify_row(row: dict[str, str]) -> dict[str, str]:
     abstract = text(row.get("crossref_abstract_text")).lower()
     available = is_true(row.get("crossref_abstract_available")) and bool(abstract)
     floral = has_any(abstract, FLORAL_CONTEXT_TERMS) if available else False
-    a_signal = floral and has_any(abstract, A_TERMS)
-    b_signal = floral and has_any(abstract, B_TERMS)
-    p_signal = has_any(abstract, P_TERMS) if available else False
     h_signal = has_any(abstract, H_TERMS) if available else False
+    a_signal = floral and has_any(abstract, A_TERMS)
+    b_core = floral and has_any(abstract, B_CORE_TERMS)
+    b_volatile_context = floral and has_any(abstract, B_CONTEXTUAL_TERMS) and h_signal
+    b_signal = b_core or b_volatile_context
+    p_signal = has_any(abstract, P_TERMS) if available else False
     w_signal = has_any(abstract, W_TERMS) if available else False
     empirical = has_any(abstract, EMPIRICAL_TERMS) if available else False
     review = has_any(abstract, REVIEW_TERMS) if available else False
