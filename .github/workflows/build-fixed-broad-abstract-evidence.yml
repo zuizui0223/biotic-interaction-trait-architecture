@@ -1,0 +1,50 @@
+name: Build fixed broad abstract evidence map
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_id:
+        description: "GitHub Actions artifact ID containing the fixed broad-reality corpus"
+        required: true
+        default: "8030510716"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build-map:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Download fixed corpus artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ inputs.artifact_id }}
+        run: |
+          gh api -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" > fixed-corpus.zip
+          unzip -q fixed-corpus.zip -d fixed-corpus
+          test -f fixed-corpus/broad_reality_evidence/broad_reality_evidence_screened.csv
+      - name: Build fixed L1 abstract packet
+        run: |
+          python scripts/build_fixed_broad_abstract_packet.py \
+            fixed-corpus/broad_reality_evidence/broad_reality_evidence_screened.csv \
+            artifacts/broad_abstract_evidence/fixed_l1_abstract_packet.csv
+      - name: Build broad evidence map and theory interface
+        run: |
+          python scripts/build_broad_abstract_theory_map.py \
+            artifacts/broad_abstract_evidence/fixed_l1_abstract_packet.csv \
+            empirical/broad_reality_evidence/broad_route_records.csv \
+            artifacts/broad_abstract_evidence
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fixed-broad-abstract-evidence-map
+          path: artifacts/broad_abstract_evidence/
+          if-no-files-found: error

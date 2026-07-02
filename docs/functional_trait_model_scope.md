@@ -7,15 +7,15 @@ trait. The theoretical variables represent functional channels; the empirical
 layer tests candidate traits within those channels one by one or as explicitly
 predeclared submodules.
 
-The first extension is therefore constrained by evidence and source coverage,
-not by the total number of interesting natural-history traits.
+The first extension is constrained by evidence and source coverage, not by the
+total number of interesting natural-history traits.
 
 ## Mapping from observed traits to channels
 
 | Functional channel | Initial observed candidates | Main interaction layer | Global-analysis status |
 |---|---|---|---|
 | `A_flower` | flower/capitulum size, display size, floral access geometry, nectar reward | pollination; florivory | primary target, subject to trait coverage |
-| `B_flower` | bract/involucral spines, floral trichomes, sticky reproductive-structure barriers | florivory; seed predation; pollination access | biologically central but likely case-study / low-coverage |
+| `B_flower` | bract/involucral spines, floral trichomes, sticky reproductive-structure barriers, flower-specific chemical deterrents | florivory; seed predation; pollination access | biologically central; broad abstract map plus source-direction anchors |
 | `Q_leaf` | SLA/LMA, LDMC, leaf N, leaf P, thickness | leaf herbivory | primary leaf target, subject to trait coverage |
 | `B_leaf` | toughness, trichomes, leaf spines, latex/resin, comparable chemical deterrents | leaf herbivory | conditional target; likely taxon- or source-limited |
 
@@ -25,7 +25,7 @@ The detailed inclusion and exclusion rules are in
 ## What changes in the theory
 
 The present qualitative score contains a single generic defence investment `D`.
-That remains useful as a minimal model, but its empirical interpretation is now
+That remains useful as a minimal model, but its active empirical interpretation is
 restricted:
 
 ```text
@@ -38,11 +38,17 @@ attraction--floral barrier relation. It does **not** automatically describe an
 association between floral display and leaf toughness, leaf spines, or leaf
 nutrient content.
 
+The broad L1/L2 abstract map can describe where the corpus mentions relevant
+flower-trait and interaction channels. It cannot bridge floral `A_flower` to leaf
+traits, turn candidate co-mentions into a model parameter, or identify a shared
+allocation cost. The explicit theory interface is documented in
+`docs/broad_evidence_to_regime_interface.md`.
+
 Before adding leaf channels to the score, a future PR must declare one of these
 bridges explicitly:
 
-1. **shared allocation bridge**: investment in `A_flower`, `B_flower`,
-   `Q_leaf`, or `B_leaf` shares a stated resource budget;
+1. **shared allocation bridge**: investment in `A_flower`, `B_flower`, `Q_leaf`,
+   or `B_leaf` shares a stated resource budget;
 2. **shared developmental bridge**: traits are linked by a stated architectural
    or allometric mechanism;
 3. **cross-organ herbivore bridge**: a consumer or damage pathway connects leaf
@@ -51,7 +57,7 @@ bridges explicitly:
    herbivory, with no predicted covariance with floral attraction.
 
 Without one of these bridges, fitting a global correlation between floral and
-leaf traits would be descriptive only and must not be called a prediction of the
+leaf traits is descriptive only and must not be called a prediction of the
 current model.
 
 ## Staged simulation roadmap

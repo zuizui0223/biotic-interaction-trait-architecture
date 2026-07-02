@@ -2,17 +2,20 @@
 
 ## Active scope
 
-The active program is deliberately limited to two linked layers:
+The active program has three linked layers:
 
 ```text
 1. derive qualitative conclusions and sensitivity boundaries from the
    attraction--defence regime model;
-2. test the model's predeclared observational signatures with global,
-   source-resolved interaction-network and trait data.
+2. map broad L1/L2 literature coverage for the empirical channels entering that model;
+3. test predeclared observational signatures with matched global network and trait data where available.
 ```
 
 Campanula, Cirsium, and Megachile remain possible future mechanistic cases. They
 are not required to establish this first theory-plus-global-data program.
+
+The broad literature layer is a coverage and sign/context interface. It does not
+replace the source-resolved network layer and does not calibrate model coefficients.
 
 ## Exact result for the current score
 
@@ -73,6 +76,28 @@ populations is a separate, data-generating-process-dependent statistic.
    no finite floral-antagonist pressure can by itself create local A--D
    complementarity in this model.
 
+## What the broad L1/L2 literature layer can test
+
+The broad corpus is a query-derived discovery map. After fixed-candidate abstract
+retrieval, it can identify shallow **candidate coverage** for organ-matched
+channels:
+
+```text
+A_flower + P language  -> A_to_pollination candidate coverage -> b_A status
+A_flower + H language  -> A_to_antagonism candidate coverage -> d_A status
+B_flower + H language  -> B_to_antagonism candidate coverage -> e_F status
+B_flower + P language  -> B_to_pollination candidate coverage -> c_D status
+```
+
+The source-adjudicated direction registry then labels each term as directionally
+anchored, condition-dependent, or not identified. The combined output does not
+produce a numerical value for `b_A`, `d_A`, `e_F`, `c_D`, `c_AD`, `P`, `H`, or
+`c_R`.
+
+`c_AD` requires matched attraction/defence allocation observations. `c_R*R`
+requires a reproductive-assurance/outcross-dilution observation model. Neither is
+identified by the active L1/L2 map, and both remain explicit sensitivity axes.
+
 ## What the global-network layer can test
 
 Global data cannot observe `P`, `H`, or the score components directly. It can
@@ -132,15 +157,16 @@ A--D covariance.
 ## Predeclared analysis sequence
 
 1. Run the model's parameter sweep and report both stable and mixed sign regions.
-2. Freeze a source registry and normalise edge and metadata tables under
+2. Build the fixed-corpus broad abstract map and its theory-term evidence status.
+3. Freeze a source registry and normalise edge and metadata tables under
    `empirical/global_networks/DATA_CONTRACT.md`.
-3. Audit network count, geographic coverage, trait coverage, interaction-type
+4. Audit network count, geographic coverage, trait coverage, interaction-type
    integrity, provenance, and weights before graph metrics are calculated.
-4. Test attraction--mutualist and defence--antagonist modules separately within
+5. Test attraction--mutualist and defence--antagonist modules separately within
    networks before any cross-network pooling.
-5. Use leave-one-network-out, trait-source, taxonomic-reconciliation, and
+6. Use leave-one-network-out, trait-source, taxonomic-reconciliation, and
    phylogenetic sensitivity analyses.
-6. Attempt the joint A--D test only if an explicitly matched dual-layer dataset
+7. Attempt the joint A--D test only if an explicitly matched dual-layer dataset
    passes the data contract.
 
 ## Falsification and non-identifiability rules
