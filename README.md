@@ -70,9 +70,13 @@ joint_channels    -> pollination and floral antagonism jointly considered
 ```
 
 It asks whether published systems provide directional support, contradiction, or
-silence for conditional Part I predictions. It produces a coverage map,
-direction map, design map, and only then small compatible effect-size
-meta-analyses within predeclared trait/outcome/design strata.
+silence for conditional Part I predictions. Because the fixed corpus collapses
+from ~17,900 discovery candidates to a handful of source-adjudicated anchors and
+zero currently poolable effect sizes, the two **primary products** are a
+source-adjudicated direction map (sign compatibility per channel) and a
+yield meta-analysis (how resolvable the evidence base is). A pooled effect-size
+synthesis is a **deferred layer**, gated on primary-source recovery of the Layer 4
+exact-stratum anchors, not the headline result.
 
 A study can be useful broad evidence even when it is not eligible for direct
 four-path calibration. Query membership and title/abstract signals are never
@@ -82,9 +86,15 @@ Key files:
 
 ```text
 empirical/broad_reality_evidence/BROAD_REALITY_EVIDENCE_PROTOCOL.md
-empirical/broad_reality_evidence/broad_evidence_query_registry.csv
+empirical/broad_reality_evidence/HIERARCHICAL_EVIDENCE_SYNTHESIS_PROTOCOL_v1.md
+empirical/broad_reality_evidence/BROAD_META_ANALYSIS_PROTOCOL.md
+empirical/broad_reality_evidence/meta_analysis_intake/FIXED_CORPUS_CAPACITY_V1.md
 trait_architecture/broad_reality_evidence.py
+trait_architecture/broad_meta_analysis.py
+trait_architecture/evidence_yield_meta_analysis.py
 scripts/harvest_broad_reality_evidence.py
+scripts/run_broad_meta_analysis.py
+scripts/run_l1_l2_evidence_yield_meta.py
 ```
 
 ### Part III-A: strict matched-study anchors
